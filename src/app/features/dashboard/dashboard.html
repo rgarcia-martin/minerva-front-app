@@ -1,0 +1,52 @@
+<section class="dashboard">
+  <header class="dashboard__heading">
+    <h1>Inicio</h1>
+    <p>Iteración 1 — esqueleto navegable conectado a minerva-core.</p>
+  </header>
+
+  <article class="card">
+    <div class="card__head">
+      <h2 class="card__title">Estado del API</h2>
+      <button type="button" class="btn btn--ghost" (click)="refresh()">
+        Reintentar
+      </button>
+    </div>
+    <div class="card__body">
+      @if (state() === 'loading') {
+        <p class="health__status health__status--loading">
+          <span class="health__dot" aria-hidden="true"></span>
+          Comprobando conexión…
+        </p>
+      } @else if (healthState(); as h) {
+        <p
+          class="health__status"
+          [class.health__status--ok]="h.online"
+          [class.health__status--ko]="!h.online"
+        >
+          <span class="health__dot" aria-hidden="true"></span>
+          {{ h.message }}
+        </p>
+      }
+      <p class="health__hint">
+        El frontend habla con <code>minerva-core</code> a través del proxy de
+        desarrollo (<code>/api/v1</code> &rarr;
+        <code>http://localhost:8080</code>).
+      </p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="card__head">
+      <h2 class="card__title">Próximos pasos</h2>
+    </div>
+    <div class="card__body">
+      <ul class="todo">
+        <li>Iteración 2 · Identidad y autenticación</li>
+        <li>Iteración 3 · Catálogo (artículos, impuestos, free concepts, locations)</li>
+        <li>Iteración 4 · Usuarios y métodos de pago</li>
+        <li>Iteración 5 · Compras + inventario</li>
+        <li>Iteración 6 · Ventas + venta rápida</li>
+      </ul>
+    </div>
+  </article>
+</section>

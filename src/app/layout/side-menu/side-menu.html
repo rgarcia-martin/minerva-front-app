@@ -1,0 +1,35 @@
+<aside class="side">
+  <div class="side__brand">
+    <span class="side__logo" aria-hidden="true">M</span>
+    <span class="side__brand-name">Minerva</span>
+  </div>
+  <nav class="side__nav">
+    @for (section of sections; track section.title) {
+      <div class="side__section">
+        <span class="side__section-title">{{ section.title }}</span>
+        <ul class="side__list">
+          @for (item of section.items; track item.label) {
+            <li class="side__item">
+              @if (item.route && !item.disabled) {
+                <a
+                  [routerLink]="item.route"
+                  routerLinkActive="side__link--active"
+                  class="side__link"
+                >
+                  <span class="side__icon" aria-hidden="true">{{ item.icon }}</span>
+                  <span>{{ item.label }}</span>
+                </a>
+              } @else {
+                <span class="side__link side__link--disabled" aria-disabled="true">
+                  <span class="side__icon" aria-hidden="true">{{ item.icon }}</span>
+                  <span>{{ item.label }}</span>
+                  <span class="side__badge">próximo</span>
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </nav>
+</aside>

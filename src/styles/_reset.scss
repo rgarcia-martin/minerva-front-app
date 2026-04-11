@@ -1,0 +1,60 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--mv-font-family);
+  font-size: var(--mv-font-size-md);
+  color: var(--mv-color-text);
+  background: var(--mv-color-bg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  color: inherit;
+}
+
+a {
+  color: var(--mv-color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--mv-color-primary-hover);
+}
+
+button {
+  font-family: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+code {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--mv-color-primary-soft);
+  padding: 1px 6px;
+  border-radius: var(--mv-radius-sm);
+}

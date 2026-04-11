@@ -1,0 +1,121 @@
+:host {
+  display: block;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--mv-color-side-bg);
+  color: var(--mv-color-side-text);
+  padding: var(--mv-space-4) 0;
+  overflow-y: auto;
+}
+
+.side__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--mv-space-3);
+  padding: 0 var(--mv-space-5) var(--mv-space-5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: var(--mv-space-4);
+}
+
+.side__logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--mv-radius-md);
+  background: var(--mv-color-primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.side__brand-name {
+  font-size: var(--mv-font-size-lg);
+  font-weight: 600;
+  color: #fff;
+}
+
+.side__nav {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mv-space-5);
+}
+
+.side__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mv-space-1);
+}
+
+.side__section-title {
+  text-transform: uppercase;
+  font-size: var(--mv-font-size-xs);
+  letter-spacing: 0.08em;
+  color: var(--mv-color-side-muted);
+  padding: 0 var(--mv-space-5) var(--mv-space-1);
+}
+
+.side__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.side__link {
+  display: flex;
+  align-items: center;
+  gap: var(--mv-space-3);
+  padding: var(--mv-space-2) var(--mv-space-5);
+  color: var(--mv-color-side-text);
+  text-decoration: none;
+  font-size: var(--mv-font-size-sm);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.side__link:hover {
+  background: var(--mv-color-side-hover);
+  color: #fff;
+}
+
+.side__link--active {
+  background: var(--mv-color-side-hover);
+  color: #fff;
+  box-shadow: inset 3px 0 0 var(--mv-color-primary);
+}
+
+.side__link--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.side__link--disabled:hover {
+  background: transparent;
+  color: var(--mv-color-side-text);
+}
+
+.side__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  color: var(--mv-color-side-muted);
+}
+
+.side__badge {
+  margin-left: auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--mv-color-side-muted);
+  padding: 2px 6px;
+  border-radius: var(--mv-radius-sm);
+}

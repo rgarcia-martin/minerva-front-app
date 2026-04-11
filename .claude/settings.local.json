@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(where node:*)",
+      "Bash(where npm:*)",
+      "Bash(where npx:*)",
+      "Bash(cmd.exe /c \"where node\")",
+      "Bash(cmd.exe /c \"where npm\")",
+      "Bash(cmd.exe /c \"where npx\")",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(ng version:*)",
+      "Bash(npx --yes @angular/cli@latest new minerva-front-app --directory=. --routing --style=scss --skip-git --package-manager=npm --ssr=false --interactive=false --defaults)",
+      "Bash(npm test:*)",
+      "Bash(ls node_modules/.bin/ng*)",
+      "Bash(npm install:*)",
+      "Bash(npx ng:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+:root {
+  /* Color palette — generada de cero, paleta indigo + slate */
+  --mv-color-bg: #f4f5f8;
+  --mv-color-surface: #ffffff;
+  --mv-color-border: #e3e6ed;
+
+  --mv-color-text: #1f2433;
+  --mv-color-text-muted: #6b7180;
+
+  --mv-color-side-bg: #1c2030;
+  --mv-color-side-hover: #262c40;
+  --mv-color-side-text: #c8cdd9;
+  --mv-color-side-muted: #6b7080;
+
+  --mv-color-primary: #4f46e5;
+  --mv-color-primary-hover: #4338ca;
+  --mv-color-primary-soft: rgba(79, 70, 229, 0.08);
+
+  --mv-color-success: #16a34a;
+  --mv-color-warning: #d97706;
+  --mv-color-danger: #dc2626;
+
+  /* Typography */
+  --mv-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --mv-font-size-xs: 11px;
+  --mv-font-size-sm: 13px;
+  --mv-font-size-md: 14px;
+  --mv-font-size-lg: 17px;
+  --mv-font-size-xl: 22px;
+
+  /* Spacing scale (4px base) */
+  --mv-space-1: 4px;
+  --mv-space-2: 8px;
+  --mv-space-3: 12px;
+  --mv-space-4: 16px;
+  --mv-space-5: 20px;
+  --mv-space-6: 24px;
+  --mv-space-7: 32px;
+  --mv-space-8: 40px;
+
+  /* Radius */
+  --mv-radius-sm: 4px;
+  --mv-radius-md: 8px;
+  --mv-radius-lg: 12px;
+
+  /* Shadows */
+  --mv-shadow-sm: 0 1px 2px rgba(20, 25, 45, 0.06);
+  --mv-shadow-md: 0 4px 12px rgba(20, 25, 45, 0.08);
+}
