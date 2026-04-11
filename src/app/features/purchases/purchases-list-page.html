@@ -1,0 +1,70 @@
+<section class="page">
+  <header class="page__head">
+    <div>
+      <h1>Compras</h1>
+      <p>Albaranes de compra recibidos. Cada uno genera items en el inventario.</p>
+    </div>
+    <a class="btn btn--primary" routerLink="/purchases/new">Nueva compra</a>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="alert alert--error">{{ msg }}</div>
+  }
+
+  <article class="card">
+    <div class="card__head">
+      <h2 class="card__title">Listado</h2>
+      <button
+        type="button"
+        class="btn btn--ghost btn--sm"
+        (click)="refresh()"
+        [disabled]="loading()"
+      >
+        Refrescar
+      </button>
+    </div>
+    <div class="card__body card__body--flush">
+      @if (loading()) {
+        <p class="empty">Cargando…</p>
+      } @else if (purchases().length === 0) {
+        <p class="empty">Aún no hay compras registradas.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nº proveedor</th>
+              <th>Proveedor</th>
+              <th>Fecha</th>
+              <th class="text-right">Líneas</th>
+              <th class="text-right">Total</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (purchase of purchases(); track purchase.id) {
+              <tr>
+                <td class="mono">{{ purchase.code }}</td>
+                <td class="mono muted">{{ purchase.providerCode }}</td>
+                <td>{{ providerName(purchase.providerId) }}</td>
+                <td class="muted">{{ formatDate(purchase.createdOn) }}</td>
+                <td class="text-right mono">{{ purchase.lines.length }}</td>
+                <td class="text-right mono">{{ purchase.totalCost }} €</td>
+                <td class="text-right">
+                  <div class="table__actions">
+                    <a
+                      class="btn btn--ghost btn--sm"
+                      [routerLink]="['/purchases', purchase.id]"
+                    >
+                      Abrir
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </article>
+</section>

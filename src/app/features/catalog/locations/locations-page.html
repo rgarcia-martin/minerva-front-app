@@ -1,0 +1,133 @@
+<section class="page">
+  <header class="page__head">
+    <div>
+      <h1>Localizaciones</h1>
+      <p>Lugares físicos donde se almacena el inventario.</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="openCreate()">
+      Nueva localización
+    </button>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="alert alert--error">{{ msg }}</div>
+  }
+
+  <article class="card">
+    <div class="card__head">
+      <h2 class="card__title">Listado</h2>
+      <button
+        type="button"
+        class="btn btn--ghost btn--sm"
+        (click)="refresh()"
+        [disabled]="loading()"
+      >
+        Refrescar
+      </button>
+    </div>
+    <div class="card__body card__body--flush">
+      @if (loading()) {
+        <p class="empty">Cargando…</p>
+      } @else if (locations().length === 0) {
+        <p class="empty">Aún no hay localizaciones.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (loc of locations(); track loc.id) {
+              <tr>
+                <td>{{ loc.name }}</td>
+                <td class="muted">{{ loc.description || '—' }}</td>
+                <td class="text-right">
+                  <div class="table__actions">
+                    <button
+                      type="button"
+                      class="btn btn--ghost btn--sm"
+                      (click)="openEdit(loc)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn--danger btn--sm"
+                      (click)="remove(loc)"
+                    >
+                      Borrar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </article>
+
+  @if (formMode().kind !== 'closed') {
+    <article class="card">
+      <div class="card__head">
+        <h2 class="card__title">
+          {{ formMode().kind === 'create' ? 'Nueva localización' : 'Editar localización' }}
+        </h2>
+        <button
+          type="button"
+          class="btn btn--ghost btn--sm"
+          (click)="closeForm()"
+        >
+          Cerrar
+        </button>
+      </div>
+      <div class="card__body">
+        <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+          <div class="field">
+            <label class="field__label" for="loc-name">Nombre</label>
+            <input
+              id="loc-name"
+              class="field__input"
+              type="text"
+              formControlName="name"
+              autocomplete="off"
+            />
+            @if (form.controls.name.touched && form.controls.name.invalid) {
+              <span class="field__error">El nombre es obligatorio.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="loc-description">Descripción</label>
+            <textarea
+              id="loc-description"
+              class="field__textarea"
+              formControlName="description"
+            ></textarea>
+          </div>
+
+          <div class="form__actions">
+            <button
+              type="button"
+              class="btn btn--ghost"
+              (click)="closeForm()"
+              [disabled]="saving()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn btn--primary"
+              [disabled]="saving()"
+            >
+              {{ saving() ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </article>
+  }
+</section>

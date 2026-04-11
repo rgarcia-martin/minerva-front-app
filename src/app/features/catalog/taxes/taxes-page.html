@@ -1,0 +1,151 @@
+<section class="page">
+  <header class="page__head">
+    <div>
+      <h1>Impuestos</h1>
+      <p>Tipos impositivos aplicables a artículos y conceptos libres.</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="openCreate()">
+      Nuevo impuesto
+    </button>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="alert alert--error">{{ msg }}</div>
+  }
+
+  <article class="card">
+    <div class="card__head">
+      <h2 class="card__title">Listado</h2>
+      <button
+        type="button"
+        class="btn btn--ghost btn--sm"
+        (click)="refresh()"
+        [disabled]="loading()"
+      >
+        Refrescar
+      </button>
+    </div>
+    <div class="card__body card__body--flush">
+      @if (loading()) {
+        <p class="empty">Cargando…</p>
+      } @else if (taxes().length === 0) {
+        <p class="empty">Aún no hay impuestos definidos.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Descripción</th>
+              <th class="text-right">Tipo</th>
+              <th class="text-right">Recargo</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tax of taxes(); track tax.id) {
+              <tr>
+                <td>{{ tax.description }}</td>
+                <td class="text-right mono">{{ tax.rate }} %</td>
+                <td class="text-right mono">{{ tax.surchargeRate }} %</td>
+                <td class="text-right">
+                  <div class="table__actions">
+                    <button
+                      type="button"
+                      class="btn btn--ghost btn--sm"
+                      (click)="openEdit(tax)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn--danger btn--sm"
+                      (click)="remove(tax)"
+                    >
+                      Borrar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </article>
+
+  @if (formMode().kind !== 'closed') {
+    <article class="card">
+      <div class="card__head">
+        <h2 class="card__title">
+          {{ formMode().kind === 'create' ? 'Nuevo impuesto' : 'Editar impuesto' }}
+        </h2>
+        <button
+          type="button"
+          class="btn btn--ghost btn--sm"
+          (click)="closeForm()"
+        >
+          Cerrar
+        </button>
+      </div>
+      <div class="card__body">
+        <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+          <div class="field">
+            <label class="field__label" for="tax-description">Descripción</label>
+            <input
+              id="tax-description"
+              class="field__input"
+              type="text"
+              formControlName="description"
+              autocomplete="off"
+            />
+            @if (form.controls.description.touched && form.controls.description.invalid) {
+              <span class="field__error">La descripción es obligatoria.</span>
+            }
+          </div>
+
+          <div class="form__row">
+            <div class="field">
+              <label class="field__label" for="tax-rate">Tipo (%)</label>
+              <input
+                id="tax-rate"
+                class="field__input"
+                type="number"
+                step="0.01"
+                min="0"
+                formControlName="rate"
+              />
+            </div>
+            <div class="field">
+              <label class="field__label" for="tax-surcharge">Recargo (%)</label>
+              <input
+                id="tax-surcharge"
+                class="field__input"
+                type="number"
+                step="0.01"
+                min="0"
+                formControlName="surchargeRate"
+              />
+            </div>
+          </div>
+
+          <div class="form__actions">
+            <button
+              type="button"
+              class="btn btn--ghost"
+              (click)="closeForm()"
+              [disabled]="saving()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn btn--primary"
+              [disabled]="saving()"
+            >
+              {{ saving() ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </article>
+  }
+</section>

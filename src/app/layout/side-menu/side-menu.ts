@@ -28,18 +28,18 @@ export class SideMenu {
     {
       title: 'Catálogo',
       items: [
-        { label: 'Artículos', icon: '☷', disabled: true },
-        { label: 'Impuestos', icon: '%', disabled: true },
-        { label: 'Conceptos libres', icon: '✦', disabled: true },
-        { label: 'Localizaciones', icon: '◇', disabled: true },
+        { label: 'Artículos', route: '/catalog/articles', icon: '☷' },
+        { label: 'Impuestos', route: '/catalog/taxes', icon: '%' },
+        { label: 'Conceptos libres', route: '/catalog/free-concepts', icon: '✦' },
+        { label: 'Localizaciones', route: '/catalog/locations', icon: '◇' },
       ],
     },
     {
       title: 'Operativa',
       items: [
-        { label: 'Compras', icon: '↧', disabled: true },
+        { label: 'Inventario', route: '/inventory/items', icon: '⊞' },
+        { label: 'Compras', route: '/purchases', icon: '↧' },
         { label: 'Ventas', icon: '↥', disabled: true },
-        { label: 'Inventario', icon: '⊞', disabled: true },
       ],
     },
     {

@@ -1,0 +1,76 @@
+<section class="page">
+  <header class="page__head">
+    <div>
+      <h1>Inventario</h1>
+      <p>Items físicos generados por las compras (read-only).</p>
+    </div>
+    <button
+      type="button"
+      class="btn btn--ghost"
+      (click)="refresh()"
+      [disabled]="loading()"
+    >
+      Refrescar
+    </button>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="alert alert--error">{{ msg }}</div>
+  }
+
+  <article class="card">
+    <div class="toolbar">
+      <div class="toolbar__group">
+        @for (chip of chips; track chip.key) {
+          <button
+            type="button"
+            class="toolbar__chip"
+            [class.toolbar__chip--active]="status() === chip.key"
+            (click)="setStatus(chip.key)"
+          >
+            {{ chip.label }}
+          </button>
+        }
+      </div>
+      <span class="muted">
+        {{ counts().total }} total · {{ counts().AVAILABLE }} disponibles ·
+        {{ counts().SOLD }} vendidos · {{ counts().RESERVED }} reservados ·
+        {{ counts().OPENED }} abiertos
+      </span>
+    </div>
+    <div class="card__body card__body--flush">
+      @if (loading()) {
+        <p class="empty">Cargando…</p>
+      } @else if (visibleItems().length === 0) {
+        <p class="empty">No hay items para el filtro seleccionado.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Artículo</th>
+              <th>Código</th>
+              <th>Estado</th>
+              <th class="text-right">Coste</th>
+              <th>Item ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of visibleItems(); track item.id) {
+              <tr>
+                <td>{{ articleName(item.articleId) }}</td>
+                <td class="mono">{{ articleCode(item.articleId) }}</td>
+                <td>
+                  <span [class]="statusBadgeClass(item.itemStatus)">
+                    {{ statusLabel(item.itemStatus) }}
+                  </span>
+                </td>
+                <td class="text-right mono">{{ item.cost }}</td>
+                <td class="mono muted">{{ item.id }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </article>
+</section>

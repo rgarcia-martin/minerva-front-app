@@ -1,0 +1,355 @@
+<section class="page page--wide">
+  <header class="page__head">
+    <div>
+      <h1>{{ editingId() ? 'Editar compra' : 'Nueva compra' }}</h1>
+      <p>Albarán de compra a un proveedor — cada línea genera items en el inventario.</p>
+    </div>
+    <div class="page__head-actions">
+      <button type="button" class="btn btn--ghost" (click)="cancel()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn btn--primary"
+        (click)="save()"
+        [disabled]="saving() || !canSave()"
+      >
+        {{ saving() ? 'Guardando…' : 'Guardar compra' }}
+      </button>
+    </div>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="alert alert--error">{{ msg }}</div>
+  }
+
+  @if (loading()) {
+    <p class="empty">Cargando…</p>
+  } @else {
+    <div class="purchase-editor">
+      <!-- LEFT: lines -->
+      <div class="purchase-editor__main">
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Buscar artículo</h2>
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              (click)="openQuickCreate()"
+              [disabled]="taxes().length === 0"
+            >
+              + Crear artículo
+            </button>
+          </div>
+          <div class="card__body">
+            <div class="search-row">
+              <input
+                type="text"
+                class="field__input search-row__input"
+                placeholder="Buscar por nombre, código o EAN…"
+                [value]="articleSearch()"
+                (input)="onSearchInput($any($event.target).value)"
+                autocomplete="off"
+              />
+              @if (articleSearch() !== '') {
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--sm"
+                  (click)="clearSearch()"
+                >
+                  Limpiar
+                </button>
+              }
+            </div>
+
+            @if (articleSearch() !== '') {
+              @if (searchResults().length === 0) {
+                <p class="muted search-row__empty">
+                  Sin resultados para “{{ articleSearch() }}”.
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm"
+                    (click)="openQuickCreate()"
+                  >
+                    + Crear artículo nuevo
+                  </button>
+                </p>
+              } @else {
+                <ul class="search-results">
+                  @for (article of searchResults(); track article.id) {
+                    <li class="search-results__item">
+                      <button
+                        type="button"
+                        class="search-results__row"
+                        (click)="addArticle(article)"
+                      >
+                        <span class="search-results__name">{{ article.name }}</span>
+                        <span class="mono muted">{{ article.code }}</span>
+                        @if (article.barcode) {
+                          <span class="mono muted">{{ article.barcode }}</span>
+                        }
+                        <span class="mono">{{ article.basePrice }} €</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            }
+          </div>
+        </article>
+
+        @if (blocks().length === 0) {
+          <article class="card">
+            <p class="empty">
+              Empieza buscando un artículo arriba o crea uno nuevo.
+            </p>
+          </article>
+        } @else {
+          @for (block of blocks(); track block.article.id) {
+            <article class="card article-block">
+              <div class="card__head">
+                <div>
+                  <h2 class="card__title">{{ block.article.name }}</h2>
+                  <p class="muted article-block__meta">
+                    <span class="mono">{{ block.article.code }}</span>
+                    @if (block.article.barcode) {
+                      · <span class="mono">{{ block.article.barcode }}</span>
+                    }
+                    · {{ block.lines.length }} línea(s)
+                  </p>
+                </div>
+                <div class="article-block__actions">
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm"
+                    (click)="addLineToArticle(block.article.id)"
+                  >
+                    + Línea
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn--danger btn--sm"
+                    (click)="removeArticle(block.article.id)"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              </div>
+              <div class="card__body card__body--flush">
+                <table class="table line-table">
+                  <thead>
+                    <tr>
+                      <th>Cant.</th>
+                      <th>Precio base</th>
+                      <th>Margen %</th>
+                      <th>IVA</th>
+                      <th>PVP (con IVA)</th>
+                      <th class="text-right">Subtotal</th>
+                      <th class="text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (line of block.lines; track line.uid) {
+                      <tr>
+                        <td>
+                          <input
+                            class="field__input field__input--num"
+                            type="number"
+                            min="1"
+                            step="1"
+                            [value]="line.quantity"
+                            (input)="onQuantityChange(line, $any($event.target).value)"
+                          />
+                        </td>
+                        <td>
+                          <div class="input-suffix">
+                            <input
+                              class="field__input field__input--num"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              [value]="line.basePrice"
+                              (input)="onBasePriceChange(line, $any($event.target).value)"
+                            />
+                            <span class="input-suffix__addon">€</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="input-suffix">
+                            <input
+                              class="field__input field__input--num"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              [value]="line.profitMargin"
+                              (input)="onProfitMarginChange(line, $any($event.target).value)"
+                            />
+                            <span class="input-suffix__addon">%</span>
+                          </div>
+                        </td>
+                        <td>
+                          <select
+                            class="field__select"
+                            [value]="line.taxId"
+                            (change)="onTaxChange(line, $any($event.target).value)"
+                          >
+                            @for (t of taxes(); track t.id) {
+                              <option [value]="t.id">{{ t.rate }} %</option>
+                            }
+                          </select>
+                        </td>
+                        <td>
+                          <div class="input-suffix">
+                            <input
+                              class="field__input field__input--num"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              [value]="line.salePrice"
+                              (input)="onSalePriceChange(line, $any($event.target).value)"
+                            />
+                            <span class="input-suffix__addon">€</span>
+                          </div>
+                        </td>
+                        <td class="text-right mono">
+                          {{ lineSubtotal(line) }} €
+                        </td>
+                        <td class="text-right">
+                          <div class="table__actions">
+                            <button
+                              type="button"
+                              class="btn btn--ghost btn--sm"
+                              (click)="cloneLine(block.article.id, line.uid)"
+                              title="Duplicar línea"
+                            >
+                              Clonar
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn--danger btn--sm"
+                              (click)="removeLine(block.article.id, line.uid)"
+                              title="Borrar línea"
+                            >
+                              Borrar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          }
+        }
+      </div>
+
+      <!-- RIGHT: header form + total -->
+      <aside class="purchase-editor__aside">
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Datos del albarán</h2>
+          </div>
+          <div class="card__body">
+            <form class="form" [formGroup]="headerForm">
+              <div class="field">
+                <label class="field__label" for="hdr-code">Código interno</label>
+                <input
+                  id="hdr-code"
+                  class="field__input"
+                  type="text"
+                  formControlName="code"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="field">
+                <label class="field__label" for="hdr-provider-code">
+                  Nº albarán proveedor
+                </label>
+                <input
+                  id="hdr-provider-code"
+                  class="field__input"
+                  type="text"
+                  formControlName="providerCode"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="field">
+                <label class="field__label" for="hdr-provider">Proveedor</label>
+                <select
+                  id="hdr-provider"
+                  class="field__select"
+                  formControlName="providerId"
+                >
+                  <option value="" disabled>— Seleccionar —</option>
+                  @for (p of providers(); track p.id) {
+                    <option [value]="p.id">{{ p.businessName }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label class="field__label" for="hdr-location">Localización</label>
+                <select
+                  id="hdr-location"
+                  class="field__select"
+                  formControlName="locationId"
+                >
+                  <option value="" disabled>— Seleccionar —</option>
+                  @for (l of locations(); track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label class="field__label" for="hdr-date">Fecha</label>
+                <input
+                  id="hdr-date"
+                  class="field__input"
+                  type="date"
+                  formControlName="createdOn"
+                />
+              </div>
+              <div class="field field__check">
+                <input
+                  id="hdr-deposit"
+                  type="checkbox"
+                  formControlName="deposit"
+                />
+                <label for="hdr-deposit">En depósito</label>
+              </div>
+            </form>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Total compra</h2>
+          </div>
+          <div class="card__body">
+            <p class="purchase-total mono">{{ totalCost() }} €</p>
+            <p class="muted">
+              {{ blocks().length }} artículo(s),
+              suma de (precio base × cantidad) por línea.
+            </p>
+          </div>
+        </article>
+      </aside>
+    </div>
+  }
+
+  @if (showQuickCreate()) {
+    <div
+      class="modal-backdrop"
+      (click)="closeQuickCreate()"
+    >
+      <div (click)="$event.stopPropagation()">
+        <app-article-quick-create-form
+          [taxes]="taxes()"
+          [initialQuery]="articleSearch()"
+          (articleCreated)="onArticleCreated($event)"
+          (cancel)="closeQuickCreate()"
+        />
+      </div>
+    </div>
+  }
+</section>

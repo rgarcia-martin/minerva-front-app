@@ -136,22 +136,31 @@ Errores normalizados vía `ApiExceptionHandler` (`ApiErrorResponse(timestamp, st
 - [ ] Menú de usuario, logout, edición de perfil
 - [ ] **Backend**: definir y abrir ticket en `minerva-core` para el endpoint de login y emisión de token
 
-### Iteración 3 — Catálogo
-- [ ] CRUD `Articles` (`/articles`) — listar, crear, editar, borrar
-- [ ] CRUD `Taxes` (`/taxes`)
-- [ ] CRUD `Free Concepts` (`/free-concepts`)
-- [ ] CRUD `Locations` (`/locations`)
-- [ ] Listado read-only `Items` (`/items`) con búsqueda y filtros
+### Iteración 3 — Catálogo *(esta entrega — saltamos iteración 2 para empezar a ver datos del API)*
+- [x] Cliente CRUD genérico `ResourceClient<TResponse, TRequest>` (`src/app/core/api/resource-client.ts`)
+- [x] Utilidades SCSS compartidas para tablas, formularios, alertas, badges y toolbars (`src/styles/_base.scss`)
+- [x] CRUD `Taxes` (`/taxes`) — `src/app/features/catalog/taxes/`
+- [x] CRUD `Locations` (`/locations`) — `src/app/features/catalog/locations/`
+- [x] CRUD `Free Concepts` (`/free-concepts`) con desplegable de impuestos — `src/app/features/catalog/free-concepts/`
+- [x] CRUD `Articles` (`/articles`) con desplegable de impuestos, checkbox `canHaveChildren` y selector de artículo hijo — `src/app/features/catalog/articles/`
+- [x] Listado read-only `Items` (`/items`) con filtros por estado (chips) — `src/app/features/inventory/items/`
+- [x] Routing por feature (`catalog.routes.ts` + `inventory.routes.ts`) montado en el `MainLayout`
+- [x] Side-menu actualizado con accesos a Catálogo e Inventario
 
 ### Iteración 4 — Identidad operativa y métodos de pago
 - [ ] CRUD `Users` / Empleados (`/users`)
 - [ ] CRUD `Payment Methods` (`/payment-methods`)
 
-### Iteración 5 — Compras
-- [ ] CRUD `Providers` (`/providers`)
-- [ ] CRUD `Purchases` (`/purchases`)
+### Iteración 5 — Compras *(parcial — editor de compras prioritario, resto pendiente)*
+- [x] Modelo y cliente HTTP de `Providers` (consumido por el editor; CRUD completo aún pendiente) — `src/app/features/people/providers/`
+- [x] Modelo y cliente HTTP de `Purchases` — `src/app/features/purchases/purchase.{model,client}.ts`
+- [x] Listado de compras con totales — `src/app/features/purchases/purchases-list-page.{ts,html}`
+- [x] Editor de compras (`/purchases/new`, `/purchases/:id`) con búsqueda global de artículos, alta rápida en popup y matemática reactiva basePrice ↔ profitMargin ↔ tax ↔ salePrice — `src/app/features/purchases/purchase-editor-page.{ts,html}` + `purchase-line-math.ts` + `article-quick-create-form.{ts,html}`
+- [x] Acceso "Compras" habilitado en el side-menu y rutas lazy registradas
+- [ ] CRUD completo `Providers` (`/providers`) — listado, alta y edición desde su propia sección
 - [ ] Visor del inventario (`Items`) generado por una compra
 - [ ] Soporte del flujo "box-opening" (artículos con `canHaveChildren`)
+- [ ] Estados especiales por línea (reservar, bloquear, abrir caja…) — pospuesto deliberadamente
 
 ### Iteración 6 — Ventas
 - [ ] CRUD `Sales` (`/sales`)
