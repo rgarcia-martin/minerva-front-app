@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -28,6 +28,25 @@ export class LocationsPage implements OnInit {
   protected readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
     description: [''],
+  });
+
+  protected readonly pageSizeOptions = [5, 10, 50];
+  protected readonly pageSize = signal(5);
+  protected readonly currentPage = signal(1);
+
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.locations().length / this.pageSize()))
+  );
+
+  protected readonly activePage = computed(() =>
+    Math.min(this.currentPage(), this.totalPages())
+  );
+
+  protected readonly paginatedLocations = computed(() => {
+    const all = this.locations();
+    const size = this.pageSize();
+    const start = (this.activePage() - 1) * size;
+    return all.slice(start, start + size);
   });
 
   ngOnInit(): void {
@@ -104,5 +123,14 @@ export class LocationsPage implements OnInit {
       next: () => this.refresh(),
       error: () => this.error.set('No se pudo eliminar la localización.'),
     });
+  }
+
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  protected goToPage(page: number): void {
+    this.currentPage.set(page);
   }
 }

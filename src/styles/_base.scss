@@ -541,3 +541,60 @@
   align-items: center;
   justify-content: space-between;
 }
+
+/* Accordion */
+.accordion {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease, margin-top 0.35s ease;
+  margin-top: calc(-1 * var(--mv-space-6));
+}
+
+.accordion--open {
+  grid-template-rows: 1fr;
+  margin-top: 0;
+}
+
+.accordion__inner {
+  overflow: hidden;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mv-space-3) var(--mv-space-5);
+  border-top: 1px solid var(--mv-color-border);
+  font-size: var(--mv-font-size-sm);
+  color: var(--mv-color-text-muted);
+}
+
+.pagination__info {
+  display: flex;
+  align-items: center;
+  gap: var(--mv-space-2);
+}
+
+.pagination__info select {
+  font: inherit;
+  font-size: var(--mv-font-size-sm);
+  padding: 4px 8px;
+  border: 1px solid var(--mv-color-border);
+  border-radius: var(--mv-radius-sm);
+  background: var(--mv-color-surface);
+  color: var(--mv-color-text);
+}
+
+.pagination__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--mv-space-2);
+}
+
+.pagination__current {
+  font-weight: 500;
+  color: var(--mv-color-text);
+  min-width: 60px;
+  text-align: center;
+}

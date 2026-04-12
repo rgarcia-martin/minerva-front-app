@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -29,6 +29,25 @@ export class TaxesPage implements OnInit {
     description: ['', [Validators.required, Validators.maxLength(120)]],
     rate: [0, [Validators.required, Validators.min(0)]],
     surchargeRate: [0, [Validators.required, Validators.min(0)]],
+  });
+
+  protected readonly pageSizeOptions = [5, 10, 50];
+  protected readonly pageSize = signal(5);
+  protected readonly currentPage = signal(1);
+
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.taxes().length / this.pageSize()))
+  );
+
+  protected readonly activePage = computed(() =>
+    Math.min(this.currentPage(), this.totalPages())
+  );
+
+  protected readonly paginatedTaxes = computed(() => {
+    const all = this.taxes();
+    const size = this.pageSize();
+    const start = (this.activePage() - 1) * size;
+    return all.slice(start, start + size);
   });
 
   ngOnInit(): void {
@@ -105,5 +124,14 @@ export class TaxesPage implements OnInit {
       next: () => this.refresh(),
       error: () => this.error.set('No se pudo eliminar el impuesto.'),
     });
+  }
+
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  protected goToPage(page: number): void {
+    this.currentPage.set(page);
   }
 }

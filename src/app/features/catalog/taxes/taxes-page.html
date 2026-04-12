@@ -13,6 +13,77 @@
     <div class="alert alert--error">{{ msg }}</div>
   }
 
+  <div class="accordion" [class.accordion--open]="formMode().kind !== 'closed'" [attr.inert]="formMode().kind === 'closed' ? '' : null">
+    <div class="accordion__inner">
+      <article class="card">
+        <div class="card__head">
+          <h2 class="card__title">
+            {{ formMode().kind === 'create' ? 'Nuevo impuesto' : 'Editar impuesto' }}
+          </h2>
+          <button type="button" class="btn btn--ghost btn--sm" (click)="closeForm()">
+            Cerrar
+          </button>
+        </div>
+        <div class="card__body">
+          <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="field">
+              <label class="field__label" for="tax-description">Descripción</label>
+              <input
+                id="tax-description"
+                class="field__input"
+                type="text"
+                formControlName="description"
+                autocomplete="off"
+              />
+              @if (form.controls.description.touched && form.controls.description.invalid) {
+                <span class="field__error">La descripción es obligatoria.</span>
+              }
+            </div>
+
+            <div class="form__row">
+              <div class="field">
+                <label class="field__label" for="tax-rate">Tipo (%)</label>
+                <input
+                  id="tax-rate"
+                  class="field__input"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  formControlName="rate"
+                />
+              </div>
+              <div class="field">
+                <label class="field__label" for="tax-surcharge">Recargo (%)</label>
+                <input
+                  id="tax-surcharge"
+                  class="field__input"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  formControlName="surchargeRate"
+                />
+              </div>
+            </div>
+
+            <div class="form__actions">
+              <button
+                type="button"
+                class="btn btn--ghost"
+                (click)="closeForm()"
+                [disabled]="saving()"
+              >
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn--primary" [disabled]="saving()">
+                {{ saving() ? 'Guardando…' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </article>
+    </div>
+  </div>
+
   <article class="card">
     <div class="card__head">
       <h2 class="card__title">Listado</h2>
@@ -41,7 +112,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (tax of taxes(); track tax.id) {
+            @for (tax of paginatedTaxes(); track tax.id) {
               <tr>
                 <td>{{ tax.description }}</td>
                 <td class="text-right mono">{{ tax.rate }} %</td>
@@ -68,84 +139,37 @@
             }
           </tbody>
         </table>
+        <div class="pagination">
+          <div class="pagination__info">
+            Mostrar
+            <select #pageSel (change)="setPageSize(+pageSel.value)">
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === pageSize()">{{ opt }}</option>
+              }
+            </select>
+            por página
+          </div>
+          <div class="pagination__nav">
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() <= 1"
+              (click)="goToPage(activePage() - 1)"
+            >
+              &laquo; Anterior
+            </button>
+            <span class="pagination__current">{{ activePage() }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() >= totalPages()"
+              (click)="goToPage(activePage() + 1)"
+            >
+              Siguiente &raquo;
+            </button>
+          </div>
+        </div>
       }
     </div>
   </article>
-
-  @if (formMode().kind !== 'closed') {
-    <article class="card">
-      <div class="card__head">
-        <h2 class="card__title">
-          {{ formMode().kind === 'create' ? 'Nuevo impuesto' : 'Editar impuesto' }}
-        </h2>
-        <button
-          type="button"
-          class="btn btn--ghost btn--sm"
-          (click)="closeForm()"
-        >
-          Cerrar
-        </button>
-      </div>
-      <div class="card__body">
-        <form class="form" [formGroup]="form" (ngSubmit)="submit()">
-          <div class="field">
-            <label class="field__label" for="tax-description">Descripción</label>
-            <input
-              id="tax-description"
-              class="field__input"
-              type="text"
-              formControlName="description"
-              autocomplete="off"
-            />
-            @if (form.controls.description.touched && form.controls.description.invalid) {
-              <span class="field__error">La descripción es obligatoria.</span>
-            }
-          </div>
-
-          <div class="form__row">
-            <div class="field">
-              <label class="field__label" for="tax-rate">Tipo (%)</label>
-              <input
-                id="tax-rate"
-                class="field__input"
-                type="number"
-                step="0.01"
-                min="0"
-                formControlName="rate"
-              />
-            </div>
-            <div class="field">
-              <label class="field__label" for="tax-surcharge">Recargo (%)</label>
-              <input
-                id="tax-surcharge"
-                class="field__input"
-                type="number"
-                step="0.01"
-                min="0"
-                formControlName="surchargeRate"
-              />
-            </div>
-          </div>
-
-          <div class="form__actions">
-            <button
-              type="button"
-              class="btn btn--ghost"
-              (click)="closeForm()"
-              [disabled]="saving()"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              class="btn btn--primary"
-              [disabled]="saving()"
-            >
-              {{ saving() ? 'Guardando…' : 'Guardar' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </article>
-  }
 </section>

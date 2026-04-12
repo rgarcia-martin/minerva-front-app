@@ -55,7 +55,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (item of visibleItems(); track item.id) {
+            @for (item of paginatedItems(); track item.id) {
               <tr>
                 <td>{{ articleName(item.articleId) }}</td>
                 <td class="mono">{{ articleCode(item.articleId) }}</td>
@@ -70,6 +70,36 @@
             }
           </tbody>
         </table>
+        <div class="pagination">
+          <div class="pagination__info">
+            Mostrar
+            <select #pageSel (change)="setPageSize(+pageSel.value)">
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === pageSize()">{{ opt }}</option>
+              }
+            </select>
+            por página
+          </div>
+          <div class="pagination__nav">
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() <= 1"
+              (click)="goToPage(activePage() - 1)"
+            >
+              &laquo; Anterior
+            </button>
+            <span class="pagination__current">{{ activePage() }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() >= totalPages()"
+              (click)="goToPage(activePage() + 1)"
+            >
+              Siguiente &raquo;
+            </button>
+          </div>
+        </div>
       }
     </div>
   </article>

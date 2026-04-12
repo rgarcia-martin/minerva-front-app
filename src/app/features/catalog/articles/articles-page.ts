@@ -50,6 +50,25 @@ export class ArticlesPage implements OnInit {
     childArticleId: [''],
   });
 
+  protected readonly pageSizeOptions = [5, 10, 50];
+  protected readonly pageSize = signal(5);
+  protected readonly currentPage = signal(1);
+
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.articles().length / this.pageSize()))
+  );
+
+  protected readonly activePage = computed(() =>
+    Math.min(this.currentPage(), this.totalPages())
+  );
+
+  protected readonly paginatedArticles = computed(() => {
+    const all = this.articles();
+    const size = this.pageSize();
+    const start = (this.activePage() - 1) * size;
+    return all.slice(start, start + size);
+  });
+
   ngOnInit(): void {
     this.refresh();
   }
@@ -184,5 +203,14 @@ export class ArticlesPage implements OnInit {
     const mode = this.formMode();
     const editingId = mode.kind === 'edit' ? mode.id : null;
     return this.articles().filter((a) => a.id !== editingId);
+  }
+
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  protected goToPage(page: number): void {
+    this.currentPage.set(page);
   }
 }

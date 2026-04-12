@@ -27,6 +27,25 @@ export class PurchasesListPage implements OnInit {
     return map;
   });
 
+  protected readonly pageSizeOptions = [5, 10, 50];
+  protected readonly pageSize = signal(5);
+  protected readonly currentPage = signal(1);
+
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.purchases().length / this.pageSize()))
+  );
+
+  protected readonly activePage = computed(() =>
+    Math.min(this.currentPage(), this.totalPages())
+  );
+
+  protected readonly paginatedPurchases = computed(() => {
+    const all = this.purchases();
+    const size = this.pageSize();
+    const start = (this.activePage() - 1) * size;
+    return all.slice(start, start + size);
+  });
+
   ngOnInit(): void {
     this.refresh();
   }
@@ -57,5 +76,14 @@ export class PurchasesListPage implements OnInit {
   protected formatDate(value: string | null): string {
     if (!value) return '—';
     return value.slice(0, 10);
+  }
+
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  protected goToPage(page: number): void {
+    this.currentPage.set(page);
   }
 }

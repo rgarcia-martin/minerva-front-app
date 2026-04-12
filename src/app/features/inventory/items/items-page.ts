@@ -61,6 +61,25 @@ export class ItemsPage implements OnInit {
     return { total, ...byStatus };
   });
 
+  protected readonly pageSizeOptions = [5, 10, 50];
+  protected readonly pageSize = signal(5);
+  protected readonly currentPage = signal(1);
+
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.visibleItems().length / this.pageSize()))
+  );
+
+  protected readonly activePage = computed(() =>
+    Math.min(this.currentPage(), this.totalPages())
+  );
+
+  protected readonly paginatedItems = computed(() => {
+    const all = this.visibleItems();
+    const size = this.pageSize();
+    const start = (this.activePage() - 1) * size;
+    return all.slice(start, start + size);
+  });
+
   ngOnInit(): void {
     this.refresh();
   }
@@ -86,6 +105,7 @@ export class ItemsPage implements OnInit {
 
   protected setStatus(value: StatusFilter): void {
     this.status.set(value);
+    this.currentPage.set(1);
   }
 
   protected articleName(id: string): string {
@@ -111,5 +131,14 @@ export class ItemsPage implements OnInit {
       case 'OPENED':
         return 'Abierto';
     }
+  }
+
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  protected goToPage(page: number): void {
+    this.currentPage.set(page);
   }
 }

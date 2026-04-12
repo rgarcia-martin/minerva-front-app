@@ -44,6 +44,25 @@ export class FreeConceptsPage implements OnInit {
     description: [''],
   });
 
+  protected readonly pageSizeOptions = [5, 10, 50];
+  protected readonly pageSize = signal(5);
+  protected readonly currentPage = signal(1);
+
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.concepts().length / this.pageSize()))
+  );
+
+  protected readonly activePage = computed(() =>
+    Math.min(this.currentPage(), this.totalPages())
+  );
+
+  protected readonly paginatedConcepts = computed(() => {
+    const all = this.concepts();
+    const size = this.pageSize();
+    const start = (this.activePage() - 1) * size;
+    return all.slice(start, start + size);
+  });
+
   ngOnInit(): void {
     this.refresh();
   }
@@ -143,5 +162,14 @@ export class FreeConceptsPage implements OnInit {
   protected taxLabel(taxId: string): string {
     const t = this.taxesById().get(taxId);
     return t ? `${t.description} (${t.rate} %)` : '—';
+  }
+
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  protected goToPage(page: number): void {
+    this.currentPage.set(page);
   }
 }

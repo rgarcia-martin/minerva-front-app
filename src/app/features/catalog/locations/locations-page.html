@@ -13,6 +13,61 @@
     <div class="alert alert--error">{{ msg }}</div>
   }
 
+  <div class="accordion" [class.accordion--open]="formMode().kind !== 'closed'" [attr.inert]="formMode().kind === 'closed' ? '' : null">
+    <div class="accordion__inner">
+      <article class="card">
+        <div class="card__head">
+          <h2 class="card__title">
+            {{ formMode().kind === 'create' ? 'Nueva localización' : 'Editar localización' }}
+          </h2>
+          <button type="button" class="btn btn--ghost btn--sm" (click)="closeForm()">
+            Cerrar
+          </button>
+        </div>
+        <div class="card__body">
+          <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="field">
+              <label class="field__label" for="loc-name">Nombre</label>
+              <input
+                id="loc-name"
+                class="field__input"
+                type="text"
+                formControlName="name"
+                autocomplete="off"
+              />
+              @if (form.controls.name.touched && form.controls.name.invalid) {
+                <span class="field__error">El nombre es obligatorio.</span>
+              }
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="loc-description">Descripción</label>
+              <textarea
+                id="loc-description"
+                class="field__textarea"
+                formControlName="description"
+              ></textarea>
+            </div>
+
+            <div class="form__actions">
+              <button
+                type="button"
+                class="btn btn--ghost"
+                (click)="closeForm()"
+                [disabled]="saving()"
+              >
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn--primary" [disabled]="saving()">
+                {{ saving() ? 'Guardando…' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </article>
+    </div>
+  </div>
+
   <article class="card">
     <div class="card__head">
       <h2 class="card__title">Listado</h2>
@@ -40,7 +95,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (loc of locations(); track loc.id) {
+            @for (loc of paginatedLocations(); track loc.id) {
               <tr>
                 <td>{{ loc.name }}</td>
                 <td class="muted">{{ loc.description || '—' }}</td>
@@ -66,68 +121,37 @@
             }
           </tbody>
         </table>
+        <div class="pagination">
+          <div class="pagination__info">
+            Mostrar
+            <select #pageSel (change)="setPageSize(+pageSel.value)">
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === pageSize()">{{ opt }}</option>
+              }
+            </select>
+            por página
+          </div>
+          <div class="pagination__nav">
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() <= 1"
+              (click)="goToPage(activePage() - 1)"
+            >
+              &laquo; Anterior
+            </button>
+            <span class="pagination__current">{{ activePage() }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() >= totalPages()"
+              (click)="goToPage(activePage() + 1)"
+            >
+              Siguiente &raquo;
+            </button>
+          </div>
+        </div>
       }
     </div>
   </article>
-
-  @if (formMode().kind !== 'closed') {
-    <article class="card">
-      <div class="card__head">
-        <h2 class="card__title">
-          {{ formMode().kind === 'create' ? 'Nueva localización' : 'Editar localización' }}
-        </h2>
-        <button
-          type="button"
-          class="btn btn--ghost btn--sm"
-          (click)="closeForm()"
-        >
-          Cerrar
-        </button>
-      </div>
-      <div class="card__body">
-        <form class="form" [formGroup]="form" (ngSubmit)="submit()">
-          <div class="field">
-            <label class="field__label" for="loc-name">Nombre</label>
-            <input
-              id="loc-name"
-              class="field__input"
-              type="text"
-              formControlName="name"
-              autocomplete="off"
-            />
-            @if (form.controls.name.touched && form.controls.name.invalid) {
-              <span class="field__error">El nombre es obligatorio.</span>
-            }
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="loc-description">Descripción</label>
-            <textarea
-              id="loc-description"
-              class="field__textarea"
-              formControlName="description"
-            ></textarea>
-          </div>
-
-          <div class="form__actions">
-            <button
-              type="button"
-              class="btn btn--ghost"
-              (click)="closeForm()"
-              [disabled]="saving()"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              class="btn btn--primary"
-              [disabled]="saving()"
-            >
-              {{ saving() ? 'Guardando…' : 'Guardar' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </article>
-  }
 </section>
