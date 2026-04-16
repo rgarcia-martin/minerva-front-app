@@ -1,0 +1,2 @@
+- [Coding standards](feedback_coding_standards.md) — SOLID, design patterns with WHY comments, English-only code, no inline literals
+- [Memory location rule](feedback_memory_location.md) — All memories in project `memory/`, never in `~/.claude/` internal dirs
