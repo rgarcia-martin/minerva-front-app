@@ -1,2 +1,4 @@
 - [Coding standards](feedback_coding_standards.md) — SOLID, design patterns with WHY comments, English-only code, no inline literals
 - [Memory location rule](feedback_memory_location.md) — All memories in project `memory/`, never in `~/.claude/` internal dirs
+- [Reusable components](feedback_reusable_components.md) — Single-source shared components, never duplicate forms/logic across views
+- [Model switching](feedback_model_switching.md) — Pause and recommend sonnet↔opus swaps whenever workload shifts between mechanical and architectural

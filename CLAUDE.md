@@ -11,6 +11,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Before writing a new memory, check if an existing one should be updated instead.
 - When recalling or applying memories, always read from `memory/` — never from the internal Claude profile directory.
 
+## Workflow Rules
+
+- ALWAYS plan before acting. For ANY task that touches more than 1 file, produce a numbered plan first and wait for approval before executing.
+- Use Sonnet for all standard work. Switch to Opus ONLY when the task involves: complex architectural decisions, multi-system refactoring, or deep reasoning across 5+ interdependent files.
+- Delegate exploration and file reading to subagents (Explore). Never read large files directly in the main context.
+- Keep responses terse. No preambles, no summaries of what you're about to do, no restating the question.
+- When running tests or builds, only show failures. Suppress passing output.
+
+
+## Delegation Rules
+
+- File discovery, code search, dependency tracing → Explore subagent (Haiku)
+- Planning for any task touching >1 file → `planner` agent (Sonnet, `.claude/agents/planner.md`). Produces numbered plan, never writes code.
+- Implementing ONE approved plan step → `executor` agent (Haiku, `.claude/agents/executor.md`). One step per invocation.
+- Multi-step implementation without a plan → general-purpose subagent (fallback only)
+- Single-file edits, quick fixes, config changes → do directly (no subagent needed)
+
+## Code Standards
+
+- Follow existing patterns in the codebase
+- Write tests for new functions
+- Prefer small, focused commits
+
 ## Commands
 
 ```bash
@@ -33,3 +56,7 @@ npm run build
 ## Architecture
 
 Angular front-end application for the Minerva POS system. Connects to the `minerva-core` Spring Boot REST API.
+
+## Compact Instructions
+
+When compacting, preserve: code changes made, test results, current plan steps, and file paths discussed. Discard: exploration output, search results, and verbose tool responses.

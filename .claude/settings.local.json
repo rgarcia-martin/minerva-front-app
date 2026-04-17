@@ -1,4 +1,10 @@
 {
+  "model": "sonnet",
+  "env": {
+    "MAX_THINKING_TOKENS": "10000",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1"
+  },
   "permissions": {
     "allow": [
       "Bash(npm --version)",
@@ -17,7 +23,8 @@
       "Bash(ls node_modules/.bin/ng*)",
       "Bash(npm install:*)",
       "Bash(npx ng:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Read(//j/Proyectos/minerva-core/**)"
     ]
   }
 }
