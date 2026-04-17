@@ -25,4 +25,10 @@ export const CATALOG_ROUTES: Routes = [
       import('./locations/locations-page').then((m) => m.LocationsPage),
     title: 'Minerva — Localizaciones',
   },
+  {
+    path: 'payment-methods',
+    loadComponent: () =>
+      import('./payment-methods/payment-methods-page').then((m) => m.PaymentMethodsPage),
+    title: 'Minerva — Métodos de pago',
+  },
 ];

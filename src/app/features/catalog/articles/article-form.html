@@ -1,0 +1,204 @@
+@if (error; as msg) {
+  <div class="alert alert--error">{{ msg }}</div>
+}
+
+<div class="form" [formGroup]="form">
+  <div class="form__row">
+    <div class="field">
+      <label class="field__label" [for]="fid('name')">Nombre</label>
+      <input
+        [id]="fid('name')"
+        class="field__input"
+        type="text"
+        formControlName="name"
+        autocomplete="off"
+      />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <span class="field__error">El nombre es obligatorio.</span>
+      }
+    </div>
+    <div class="field">
+      <label class="field__label" [for]="fid('code')">Código</label>
+      <input
+        [id]="fid('code')"
+        class="field__input"
+        type="text"
+        formControlName="code"
+        autocomplete="off"
+      />
+      @if (form.controls.code.touched && form.controls.code.invalid) {
+        <span class="field__error">El código es obligatorio.</span>
+      }
+    </div>
+  </div>
+
+  @if (!compact) {
+    <div class="form__row">
+      <div class="field">
+        <label class="field__label" [for]="fid('barcode')">EAN / Código de barras</label>
+        <input
+          [id]="fid('barcode')"
+          class="field__input"
+          type="text"
+          formControlName="barcode"
+          autocomplete="off"
+        />
+      </div>
+      <div class="field">
+        <label class="field__label" [for]="fid('image')">Imagen (URL)</label>
+        <input
+          [id]="fid('image')"
+          class="field__input"
+          type="text"
+          formControlName="image"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+  } @else {
+    <div class="field">
+      <label class="field__label" [for]="fid('barcode')">EAN / Código de barras</label>
+      <input
+        [id]="fid('barcode')"
+        class="field__input"
+        type="text"
+        formControlName="barcode"
+        autocomplete="off"
+      />
+    </div>
+  }
+
+  <div class="form__row form__row--three">
+    <div class="field">
+      <label class="field__label" [for]="fid('tax')">Impuesto</label>
+      <select [id]="fid('tax')" class="field__select" formControlName="taxId">
+        <option value="" disabled>— Seleccionar —</option>
+        @for (t of taxes; track t.id) {
+          <option [value]="t.id">{{ t.description }} ({{ t.rate }} %)</option>
+        }
+      </select>
+      @if (form.controls.taxId.touched && form.controls.taxId.invalid) {
+        <span class="field__error">Selecciona un impuesto.</span>
+      }
+    </div>
+    <div class="field">
+      <label class="field__label" [for]="fid('base')">Precio base</label>
+      <input
+        [id]="fid('base')"
+        class="field__input"
+        type="number"
+        step="0.01"
+        min="0"
+        formControlName="basePrice"
+      />
+    </div>
+    <div class="field">
+      <label class="field__label" [for]="fid('retail')">PVP</label>
+      <input
+        [id]="fid('retail')"
+        class="field__input"
+        type="number"
+        step="0.01"
+        min="0"
+        formControlName="retailPrice"
+      />
+    </div>
+  </div>
+
+  @if (!compact) {
+    <div class="field">
+      <label class="field__label" [for]="fid('desc')">Descripción</label>
+      <textarea
+        [id]="fid('desc')"
+        class="field__textarea"
+        formControlName="description"
+      ></textarea>
+    </div>
+
+    <!-- Children section: 0-N child article references with quantity per entry -->
+    <div class="children-section" formArrayName="children">
+      <div class="children-section__head">
+        <span class="field__label">Artículos contenidos (caja)</span>
+        <div class="children-section__actions">
+          <button
+            type="button"
+            class="btn btn--outline btn--sm"
+            title="Crear nuevo artículo hijo"
+            (click)="createChildRequest.emit()"
+          >
+            + Nuevo
+          </button>
+          <button
+            type="button"
+            class="btn btn--outline btn--sm"
+            (click)="addEmptyChild()"
+          >
+            + Existente
+          </button>
+        </div>
+      </div>
+
+      @if (childRows.length === 0) {
+        <p class="empty empty--sm">Sin contenido — este artículo es una unidad individual.</p>
+      }
+
+      @for (row of childRows.controls; track row; let i = $index) {
+        <div class="child-row" [formGroupName]="i">
+          <div class="field field--grow">
+            <select class="field__select" formControlName="childArticleId">
+              <option value="" disabled>— Seleccionar artículo —</option>
+              @for (a of childCandidates; track a.id) {
+                <option [value]="a.id">{{ a.name }} ({{ a.code }})</option>
+              }
+            </select>
+            @if (row.get('childArticleId')?.touched && row.get('childArticleId')?.invalid) {
+              <span class="field__error">Selecciona un artículo.</span>
+            }
+          </div>
+          <div class="field field--qty">
+            <input
+              class="field__input"
+              type="number"
+              min="1"
+              formControlName="quantity"
+              placeholder="Cant."
+            />
+            @if (row.get('quantity')?.touched && row.get('quantity')?.invalid) {
+              <span class="field__error">Mín. 1.</span>
+            }
+          </div>
+          <button
+            type="button"
+            class="btn btn--danger btn--sm btn--icon"
+            title="Eliminar fila"
+            (click)="removeChild(i)"
+          >
+            ×
+          </button>
+        </div>
+      }
+
+      <!-- Slot: parent projects the inline child-creation accordion here -->
+      <ng-content></ng-content>
+    </div>
+  }
+
+  <div class="form__actions">
+    <button
+      type="button"
+      class="btn btn--ghost"
+      (click)="cancel()"
+      [disabled]="saving"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="btn btn--primary"
+      (click)="submit()"
+      [disabled]="saving"
+    >
+      {{ saving ? 'Guardando…' : submitLabel }}
+    </button>
+  </div>
+</div>

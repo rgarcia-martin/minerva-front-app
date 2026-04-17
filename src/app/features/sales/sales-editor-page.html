@@ -1,0 +1,338 @@
+<section class="page page--wide">
+  <header class="page__head">
+    <div>
+      <h1>{{ viewingId() ? 'Venta' : 'Nueva venta' }}</h1>
+      <p>Registra una venta: busca artículos o conceptos libres y añádelos como líneas.</p>
+    </div>
+    <div class="page__head-actions">
+      @if (viewingId()) {
+        <button type="button" class="btn btn--ghost" (click)="cancel()">
+          Volver al listado
+        </button>
+        <button type="button" class="btn btn--danger" (click)="removeSale()">
+          Borrar venta
+        </button>
+      } @else {
+        <button type="button" class="btn btn--ghost" (click)="cancel()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn--primary"
+          (click)="save()"
+          [disabled]="saving() || !canSave()"
+        >
+          {{ saving() ? 'Guardando…' : 'Guardar venta' }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="alert alert--error">{{ msg }}</div>
+  }
+
+  @if (loading()) {
+    <p class="empty">Cargando…</p>
+  } @else {
+    @if (viewingId()) {
+      @if (loadedSale(); as sale) {
+        <div class="purchase-editor">
+          <div class="purchase-editor__main">
+            <article class="card">
+              <div class="card__head">
+                <h2 class="card__title">Líneas de la venta</h2>
+              </div>
+              <div class="card__body card__body--flush">
+                <table class="table line-table">
+                  <thead>
+                    <tr>
+                      <th>Concepto</th>
+                      <th class="text-right">PVP</th>
+                      <th class="text-right">IVA</th>
+                      <th class="text-right">Unidades</th>
+                      <th class="text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (line of sale.lines; track line.id) {
+                      <tr>
+                        <td>{{ lineDescriptor(line) }}</td>
+                        <td class="text-right mono">{{ line.unitPrice }} €</td>
+                        <td class="text-right mono">{{ taxRate(line.taxId) }} %</td>
+                        <td class="text-right mono">{{ line.quantity }}</td>
+                        <td class="text-right mono">{{ lineSubtotalOf(line) }} €</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+          <aside class="purchase-editor__aside">
+            <article class="card">
+              <div class="card__head">
+                <h2 class="card__title">Datos de la venta</h2>
+              </div>
+              <div class="card__body">
+                <dl class="form">
+                  <div class="field">
+                    <dt class="field__label">Código</dt>
+                    <dd class="mono">{{ sale.code }}</dd>
+                  </div>
+                  <div class="field">
+                    <dt class="field__label">Empleado</dt>
+                    <dd>{{ employeeName(sale.employeeId) }}</dd>
+                  </div>
+                  <div class="field">
+                    <dt class="field__label">Método de pago</dt>
+                    <dd>{{ paymentMethodName(sale.paymentMethodId) }}</dd>
+                  </div>
+                  <div class="field">
+                    <dt class="field__label">Estado</dt>
+                    <dd>{{ stateLabel(sale.state) }}</dd>
+                  </div>
+                  <div class="field">
+                    <dt class="field__label">Fecha</dt>
+                    <dd class="muted">{{ sale.createdOn }}</dd>
+                  </div>
+                </dl>
+              </div>
+            </article>
+            <article class="card">
+              <div class="card__head">
+                <h2 class="card__title">Total venta</h2>
+              </div>
+              <div class="card__body">
+                <p class="purchase-total mono">{{ sale.totalAmount }} €</p>
+                <p class="muted">{{ sale.lines.length }} línea(s).</p>
+              </div>
+            </article>
+          </aside>
+        </div>
+      }
+    } @else {
+      <div class="purchase-editor">
+      <div class="purchase-editor__main">
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Buscar artículo o concepto libre</h2>
+          </div>
+          <div class="card__body">
+            <div class="search-row">
+              <input
+                type="text"
+                class="field__input search-row__input"
+                placeholder="Buscar por nombre, código o EAN…"
+                [value]="lineSearch()"
+                (input)="onSearchInput($any($event.target).value)"
+                autocomplete="off"
+              />
+              @if (lineSearch() !== '') {
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--sm"
+                  (click)="clearSearch()"
+                >
+                  Limpiar
+                </button>
+              }
+            </div>
+
+            @if (lineSearch() !== '') {
+              @if (searchResults().length === 0) {
+                <p class="muted search-row__empty">
+                  Sin resultados para "{{ lineSearch() }}".
+                </p>
+              } @else {
+                <ul class="search-results">
+                  @for (hit of searchResults(); track hit.kind === 'article' ? hit.article.id : hit.freeConcept.id) {
+                    <li class="search-results__item">
+                      <div class="search-results__row">
+                        @if (hit.kind === 'article') {
+                          <button
+                            type="button"
+                            class="search-results__add"
+                            (click)="addArticleLine(hit.article)"
+                          >
+                            <span class="search-results__name">{{ hit.article.name }}</span>
+                            <span class="mono muted">{{ hit.article.code }}</span>
+                            @if (hit.article.barcode) {
+                              <span class="mono muted">{{ hit.article.barcode }}</span>
+                            }
+                            <span class="mono">{{ hit.article.retailPrice }} €</span>
+                            <span class="muted">{{ hit.availableCount }} disp.</span>
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="search-results__add"
+                            (click)="addFreeConceptLine(hit.freeConcept)"
+                          >
+                            <span class="search-results__name">{{ hit.freeConcept.name }}</span>
+                            <span class="mono muted">{{ hit.freeConcept.barcode }}</span>
+                            <span class="mono">{{ hit.freeConcept.price }} €</span>
+                            <span class="muted">concepto libre</span>
+                          </button>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            }
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Líneas de venta</h2>
+          </div>
+          <div class="card__body card__body--flush">
+            @if (lines().length === 0) {
+              <p class="empty">Empieza buscando un artículo o concepto libre arriba.</p>
+            } @else {
+              <table class="table line-table">
+                <thead>
+                  <tr>
+                    <th>Concepto</th>
+                    <th>PVP</th>
+                    <th>IVA</th>
+                    <th>Unidades</th>
+                    <th class="text-right">Subtotal</th>
+                    <th class="text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (line of lines(); track line.uid) {
+                    <tr>
+                      <td>
+                        <span>{{ line.displayName }}</span>
+                        @if (line.itemId) {
+                          <span class="muted mono">· item</span>
+                        } @else {
+                          <span class="muted">· concepto libre</span>
+                        }
+                      </td>
+                      <td>
+                        <div class="input-suffix">
+                          <input
+                            class="field__input field__input--num"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            [value]="line.unitPrice"
+                            (input)="updateLinePrice(line.uid, $any($event.target).value)"
+                          />
+                          <span class="input-suffix__addon">€</span>
+                        </div>
+                      </td>
+                      <td>
+                        <select
+                          class="field__select"
+                          [value]="line.taxId"
+                          (change)="updateLineTax(line.uid, $any($event.target).value)"
+                        >
+                          @for (t of taxes(); track t.id) {
+                            <option [value]="t.id">{{ t.rate }} %</option>
+                          }
+                        </select>
+                      </td>
+                      <td>
+                        @if (line.itemId) {
+                          <span class="mono muted">1</span>
+                        } @else {
+                          <input
+                            class="field__input field__input--num"
+                            type="number"
+                            min="1"
+                            step="1"
+                            [value]="line.quantity"
+                            (input)="updateLineQuantity(line.uid, $any($event.target).value)"
+                          />
+                        }
+                      </td>
+                      <td class="text-right mono">{{ lineSubtotalOf(line) }} €</td>
+                      <td class="text-right">
+                        <div class="table__actions">
+                          <button
+                            type="button"
+                            class="btn btn--danger btn--sm"
+                            (click)="removeLine(line.uid)"
+                            title="Quitar línea"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+        </article>
+      </div>
+      <aside class="purchase-editor__aside">
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Datos de la venta</h2>
+          </div>
+          <div class="card__body">
+            <form class="form" [formGroup]="headerForm">
+              <div class="field">
+                <label class="field__label" for="sale-code">Código interno</label>
+                <input
+                  id="sale-code"
+                  class="field__input"
+                  type="text"
+                  formControlName="code"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="field">
+                <label class="field__label" for="sale-employee">Empleado</label>
+                <select
+                  id="sale-employee"
+                  class="field__select"
+                  formControlName="employeeId"
+                >
+                  <option value="" disabled>— Seleccionar —</option>
+                  @for (u of employees(); track u.id) {
+                    <option [value]="u.id">{{ u.name }} {{ u.lastName }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label class="field__label" for="sale-payment">Método de pago</label>
+                <select
+                  id="sale-payment"
+                  class="field__select"
+                  formControlName="paymentMethodId"
+                >
+                  <option value="" disabled>— Seleccionar —</option>
+                  @for (pm of paymentMethods(); track pm.id) {
+                    <option [value]="pm.id">{{ pm.name }}</option>
+                  }
+                </select>
+              </div>
+            </form>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Total venta</h2>
+          </div>
+          <div class="card__body">
+            <p class="purchase-total mono">{{ totalAmount() }} €</p>
+            <p class="muted">
+              {{ lines().length }} línea(s),
+              suma de (PVP × unidades) por línea.
+            </p>
+          </div>
+        </article>
+      </aside>
+      </div>
+    }
+  }
+</section>

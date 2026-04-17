@@ -1,27 +1,25 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { Tax } from '../taxes/tax.model';
 import { TaxClient } from '../taxes/tax.client';
 import { Article, ArticleRequest } from './article.model';
 import { ArticleClient } from './article.client';
+import { ArticleForm } from './article-form';
 
 type FormMode = { kind: 'closed' } | { kind: 'create' } | { kind: 'edit'; id: string };
 
 @Component({
   selector: 'app-articles-page',
-  imports: [ReactiveFormsModule],
+  imports: [ArticleForm],
   templateUrl: './articles-page.html',
 })
 export class ArticlesPage implements OnInit {
   private readonly client = inject(ArticleClient);
   private readonly taxClient = inject(TaxClient);
-  private readonly fb = inject(FormBuilder);
+
+  protected readonly mainForm = viewChild<ArticleForm>('mainForm');
+  protected readonly childFormRef = viewChild<ArticleForm>('childFormRef');
 
   protected readonly articles = signal<Article[]>([]);
   protected readonly taxes = signal<Tax[]>([]);
@@ -30,24 +28,14 @@ export class ArticlesPage implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly formMode = signal<FormMode>({ kind: 'closed' });
 
+  protected readonly childFormOpen = signal(false);
+  protected readonly savingChild = signal(false);
+  protected readonly childError = signal<string | null>(null);
+
   protected readonly taxesById = computed(() => {
     const map = new Map<string, Tax>();
     for (const t of this.taxes()) map.set(t.id, t);
     return map;
-  });
-
-  protected readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(120)]],
-    code: ['', [Validators.required, Validators.maxLength(60)]],
-    barcode: [''],
-    image: [''],
-    description: [''],
-    taxId: ['', Validators.required],
-    basePrice: [0, [Validators.required, Validators.min(0)]],
-    retailPrice: [0, [Validators.required, Validators.min(0)]],
-    canHaveChildren: [false],
-    numberOfChildren: [0, [Validators.min(0)]],
-    childArticleId: [''],
   });
 
   protected readonly pageSizeOptions = [5, 10, 50];
@@ -67,6 +55,18 @@ export class ArticlesPage implements OnInit {
     const size = this.pageSize();
     const start = (this.activePage() - 1) * size;
     return all.slice(start, start + size);
+  });
+
+  /**
+   * Candidate articles for the child dropdown.
+   * WHY computed: ensures the list recomputes deterministically when either
+   * `articles` or `formMode` change, and hands a stable reference to the child
+   * form input until one of those dependencies actually changes.
+   */
+  protected readonly childCandidatesList = computed<Article[]>(() => {
+    const mode = this.formMode();
+    const editingId = mode.kind === 'edit' ? mode.id : null;
+    return this.articles().filter((a) => a.id !== editingId);
   });
 
   ngOnInit(): void {
@@ -93,77 +93,29 @@ export class ArticlesPage implements OnInit {
   }
 
   protected openCreate(): void {
-    this.form.reset({
-      name: '',
-      code: '',
-      barcode: '',
-      image: '',
-      description: '',
-      taxId: this.taxes()[0]?.id ?? '',
-      basePrice: 0,
-      retailPrice: 0,
-      canHaveChildren: false,
-      numberOfChildren: 0,
-      childArticleId: '',
-    });
+    this.error.set(null);
     this.formMode.set({ kind: 'create' });
+    this.mainForm()?.reset(null);
   }
 
   protected openEdit(article: Article): void {
-    this.form.reset({
-      name: article.name,
-      code: article.code,
-      barcode: article.barcode ?? '',
-      image: article.image ?? '',
-      description: article.description ?? '',
-      taxId: article.taxId,
-      basePrice: article.basePrice,
-      retailPrice: article.retailPrice,
-      canHaveChildren: article.canHaveChildren,
-      numberOfChildren: article.numberOfChildren ?? 0,
-      childArticleId: article.childArticleId ?? '',
-    });
+    this.error.set(null);
+    // Close any residual nested child-creation form so it does not leak state
+    // from the previously edited article into the new edit session.
+    this.closeChildForm();
     this.formMode.set({ kind: 'edit', id: article.id });
+    this.mainForm()?.reset(article);
   }
 
   protected closeForm(): void {
     this.formMode.set({ kind: 'closed' });
     this.error.set(null);
+    this.closeChildForm();
   }
 
-  protected submit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+  protected submit(body: ArticleRequest): void {
     const mode = this.formMode();
     if (mode.kind === 'closed') return;
-
-    const raw = this.form.getRawValue();
-    const editingId = mode.kind === 'edit' ? mode.id : null;
-
-    const body: ArticleRequest = {
-      name: raw.name,
-      code: raw.code,
-      barcode: raw.barcode.trim() === '' ? null : raw.barcode,
-      image: raw.image.trim() === '' ? null : raw.image,
-      description: raw.description.trim() === '' ? null : raw.description,
-      taxId: raw.taxId,
-      basePrice: raw.basePrice,
-      retailPrice: raw.retailPrice,
-      canHaveChildren: raw.canHaveChildren,
-      numberOfChildren: raw.canHaveChildren ? raw.numberOfChildren : null,
-      childArticleId:
-        raw.canHaveChildren && raw.childArticleId.trim() !== ''
-          ? raw.childArticleId
-          : null,
-    };
-
-    // Guard: en edición, no permitir que un artículo se referencie a sí mismo
-    if (editingId && body.childArticleId === editingId) {
-      this.error.set('Un artículo no puede ser su propio hijo.');
-      return;
-    }
 
     this.saving.set(true);
     this.error.set(null);
@@ -199,10 +151,35 @@ export class ArticlesPage implements OnInit {
     return t ? `${t.description} (${t.rate} %)` : '—';
   }
 
-  protected childCandidates(): Article[] {
-    const mode = this.formMode();
-    const editingId = mode.kind === 'edit' ? mode.id : null;
-    return this.articles().filter((a) => a.id !== editingId);
+  protected openChildForm(): void {
+    this.childError.set(null);
+    this.childFormOpen.set(true);
+    this.childFormRef()?.reset(null);
+  }
+
+  protected closeChildForm(): void {
+    this.childFormOpen.set(false);
+    this.childError.set(null);
+  }
+
+  protected submitChild(body: ArticleRequest): void {
+    this.savingChild.set(true);
+    this.childError.set(null);
+
+    this.client.create(body).subscribe({
+      next: (created) => {
+        this.savingChild.set(false);
+        // Add to local list so the main form's candidate dropdown picks it up immediately.
+        this.articles.update((list) => [...list, created]);
+        // Append a pre-filled row in the main form for the newly created child.
+        this.mainForm()?.addChild(created.id);
+        this.closeChildForm();
+      },
+      error: () => {
+        this.savingChild.set(false);
+        this.childError.set('No se pudo crear el artículo hijo.');
+      },
+    });
   }
 
   protected setPageSize(size: number): void {

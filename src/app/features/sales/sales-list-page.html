@@ -1,0 +1,100 @@
+<section class="page">
+  <header class="page__head">
+    <div>
+      <h1>Ventas</h1>
+      <p>Ventas confirmadas. Cada venta bloquea sus items del inventario.</p>
+    </div>
+    <a class="btn btn--primary" routerLink="/sales/new">Nueva venta</a>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="alert alert--error">{{ msg }}</div>
+  }
+
+  <article class="card">
+    <div class="card__head">
+      <h2 class="card__title">Listado</h2>
+      <button
+        type="button"
+        class="btn btn--ghost btn--sm"
+        (click)="refresh()"
+        [disabled]="loading()"
+      >
+        Refrescar
+      </button>
+    </div>
+    <div class="card__body card__body--flush">
+      @if (loading()) {
+        <p class="empty">Cargando…</p>
+      } @else if (sales().length === 0) {
+        <p class="empty">Aún no hay ventas registradas.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Empleado</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th class="text-right">Líneas</th>
+              <th class="text-right">Total</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sale of paginatedSales(); track sale.id) {
+              <tr>
+                <td class="mono">{{ sale.code }}</td>
+                <td>{{ employeeName(sale.employeeId) }}</td>
+                <td class="muted">{{ formatDate(sale.createdOn) }}</td>
+                <td class="muted">{{ stateLabel(sale.state) }}</td>
+                <td class="text-right mono">{{ sale.lines.length }}</td>
+                <td class="text-right mono">{{ sale.totalAmount }} €</td>
+                <td class="text-right">
+                  <div class="table__actions">
+                    <a
+                      class="btn btn--ghost btn--sm"
+                      [routerLink]="['/sales', sale.id]"
+                    >
+                      Abrir
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="pagination">
+          <div class="pagination__info">
+            Mostrar
+            <select #pageSel (change)="setPageSize(+pageSel.value)">
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === pageSize()">{{ opt }}</option>
+              }
+            </select>
+            por página
+          </div>
+          <div class="pagination__nav">
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() <= 1"
+              (click)="goToPage(activePage() - 1)"
+            >
+              &laquo; Anterior
+            </button>
+            <span class="pagination__current">{{ activePage() }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() >= totalPages()"
+              (click)="goToPage(activePage() + 1)"
+            >
+              Siguiente &raquo;
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </article>
+</section>

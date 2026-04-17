@@ -2,3 +2,4 @@
 - [Memory location rule](feedback_memory_location.md) — All memories in project `memory/`, never in `~/.claude/` internal dirs
 - [Reusable components](feedback_reusable_components.md) — Single-source shared components, never duplicate forms/logic across views
 - [Model switching](feedback_model_switching.md) — Pause and recommend sonnet↔opus swaps whenever workload shifts between mechanical and architectural
+- [Sales UI deferred scope](project_sales_deferred.md) — Client, promo codes/lock, ticket print: out of first Nueva Venta iteration, waiting on backend

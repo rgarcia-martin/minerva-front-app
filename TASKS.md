@@ -163,10 +163,21 @@ Errores normalizados vía `ApiExceptionHandler` (`ApiErrorResponse(timestamp, st
 - [ ] Estados especiales por línea (reservar, bloquear, abrir caja…) — pospuesto deliberadamente
 
 ### Iteración 6 — Ventas
-- [ ] CRUD `Sales` (`/sales`)
-- [ ] Líneas de venta sobre items y free-concepts (XOR)
-- [ ] Liberación de stock al borrar venta
+- [x] Modelo y cliente HTTP `PaymentMethod` (`/payment-methods`) — `src/app/features/catalog/payment-methods/` (prerequisito)
+- [x] Modelo y cliente HTTP `User` (`/users`) — `src/app/features/people/users/` (prerequisito)
+- [x] Modelo y cliente HTTP `Sale` (`/sales`) — sin `update` (agregado inmutable) — `src/app/features/sales/sale.{model,client}.ts`
+- [x] Helpers puros de cálculo `sale-line-math.ts` + tests Jasmine
+- [x] Listado `Sales` (`/sales`) con código, empleado, fecha, estado, total — `sales-list-page.{ts,html}`
+- [x] Editor "Nueva venta" (`/sales/new`) con búsqueda unificada artículos + conceptos libres, líneas XOR item/freeConcept, cabecera (código/empleado/método de pago) y total — `sales-editor-page.{ts,html}`
+- [x] Vista read-only de venta existente (`/sales/:id`) con borrado (liberación de stock)
+- [x] Rutas lazy + entrada "Ventas" en side-menu
 - [ ] Pantalla "venta rápida" (`quick_sale`)
+
+#### Deferido en primera iteración de "Nueva Venta" (atacar en iteraciones posteriores)
+- [ ] **Cliente asociado a la venta**: el backend acepta `clientId` opcional pero `minerva-core` aún no expone `ClientController`. Se deja el campo fuera del formulario hasta que exista el endpoint CRUD de clientes.
+- [ ] **Códigos promocionales y lock/unlock de items**: el CMS antiguo de eLibreria permitía aplicar promo codes y bloquear/reservar items durante la edición. Fuera de alcance hasta que `minerva-core` exponga el agregado `PromoCode` y las transiciones de `ItemStatus` (RESERVED/OPENED) vía API.
+- [ ] **Impresión de ticket**: vista imprimible post-venta (equivalente a la plantilla `sales/ticket.html.twig` del legacy). Requiere definir formato y, probablemente, un endpoint que devuelva el ticket renderizado o los datos normalizados.
+- [ ] **Descuentos por línea y globales**: `minerva-core` no acepta `discount` en `SaleLineRequest` ni un descuento global en la venta. Queda fuera hasta que el backend amplíe el agregado `Sale`.
 
 ### Iteración 7 — Dashboard y búsqueda global
 - [ ] Página principal con accesos rápidos y estadísticas (espejo de `templates/index/index.html.twig`)

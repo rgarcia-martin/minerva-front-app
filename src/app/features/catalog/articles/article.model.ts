@@ -1,3 +1,14 @@
+/**
+ * Value object: a reference from a parent article to one of its children,
+ * with the quantity the parent contains.
+ * WHY separate type: mirrors the backend aggregate shape (`ArticleChild`) and
+ * lets the form bind a FormArray of well-typed rows instead of parallel arrays.
+ */
+export interface ArticleChild {
+  childArticleId: string;
+  quantity: number;
+}
+
 export interface Article {
   id: string;
   name: string;
@@ -8,9 +19,9 @@ export interface Article {
   taxId: string;
   basePrice: number;
   retailPrice: number;
+  /** Derived server-side: true when `children` is non-empty. */
   canHaveChildren: boolean;
-  numberOfChildren: number | null;
-  childArticleId: string | null;
+  children: ArticleChild[];
 }
 
 export interface ArticleRequest {
@@ -22,7 +33,5 @@ export interface ArticleRequest {
   taxId: string;
   basePrice: number;
   retailPrice: number;
-  canHaveChildren: boolean;
-  numberOfChildren: number | null;
-  childArticleId: string | null;
+  children: ArticleChild[];
 }

@@ -39,7 +39,7 @@ export class SideMenu {
       items: [
         { label: 'Inventario', route: '/inventory/items', icon: '⊞' },
         { label: 'Compras', route: '/purchases', icon: '↧' },
-        { label: 'Ventas', icon: '↥', disabled: true },
+        { label: 'Ventas', route: '/sales', icon: '↥' },
       ],
     },
     {
@@ -52,7 +52,7 @@ export class SideMenu {
     },
     {
       title: 'Configuración',
-      items: [{ label: 'Métodos de pago', icon: '€', disabled: true }],
+      items: [{ label: 'Métodos de pago', route: '/catalog/payment-methods', icon: '€' }],
     },
   ];
 }

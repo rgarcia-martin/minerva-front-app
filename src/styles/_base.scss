@@ -90,6 +90,25 @@
   font-size: var(--mv-font-size-xs);
 }
 
+.btn--outline {
+  background: transparent;
+  color: var(--mv-color-primary);
+  border-color: var(--mv-color-primary);
+}
+
+.btn--outline:hover:not(:disabled) {
+  background: var(--mv-color-primary-soft);
+}
+
+.btn--icon {
+  padding: 8px;
+  min-width: 36px;
+  min-height: 36px;
+  font-size: var(--mv-font-size-md);
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* Page layout */
 .page {
   display: flex;
@@ -265,6 +284,16 @@
   color: var(--mv-color-danger);
 }
 
+.field__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mv-space-2);
+}
+
+.field__row > .field__select {
+  flex: 1;
+}
+
 .field__check {
   flex-direction: row;
   align-items: center;
@@ -433,8 +462,17 @@
   border-top: 1px solid var(--mv-color-border);
 }
 
+/* Row is now a flex container to hold the clickable item + optional action buttons */
 .search-results__row {
-  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--mv-space-2);
+  padding: var(--mv-space-1) var(--mv-space-4) var(--mv-space-1) 0;
+}
+
+/* The clickable article info part */
+.search-results__add {
+  flex: 1;
   background: transparent;
   border: 0;
   text-align: left;
@@ -448,7 +486,7 @@
   align-items: center;
 }
 
-.search-results__row:hover {
+.search-results__add:hover {
   background: var(--mv-color-primary-soft);
 }
 
@@ -480,6 +518,13 @@
 .field__input--num {
   text-align: right;
   max-width: 100px;
+}
+
+/* Mini numeric input used inline in block headers (e.g. bulk-add counter) */
+.field__input--mini {
+  max-width: 56px;
+  padding: 4px 6px;
+  font-size: var(--mv-font-size-sm);
 }
 
 .input-suffix {
@@ -559,6 +604,24 @@
   overflow: hidden;
 }
 
+/* Nested accordion (inside a form) — no negative margin, subtle spacing */
+.accordion--nested {
+  margin-top: 0;
+  border-radius: var(--mv-radius-md);
+}
+
+.accordion--nested:not(.accordion--open) {
+  margin-top: 0;
+}
+
+/* Nested card — lighter visual weight for inline sub-forms */
+.card--nested {
+  background: var(--mv-color-bg);
+  border: 1px dashed var(--mv-color-border);
+  border-radius: var(--mv-radius-md);
+  box-shadow: none;
+}
+
 /* Pagination */
 .pagination {
   display: flex;
@@ -597,4 +660,53 @@
   color: var(--mv-color-text);
   min-width: 60px;
   text-align: center;
+}
+
+/* Wide modal variant for full article edit form */
+.modal-window--wide {
+  max-width: 860px;
+}
+
+/* Children section inside the article form */
+.children-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mv-space-3);
+  padding: var(--mv-space-4);
+  background: var(--mv-color-bg);
+  border: 1px solid var(--mv-color-border);
+  border-radius: var(--mv-radius-md);
+}
+
+.children-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mv-space-3);
+}
+
+.children-section__actions {
+  display: inline-flex;
+  gap: var(--mv-space-2);
+}
+
+/* A single child article row: [article select] [quantity] [remove button] */
+.child-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mv-space-3);
+}
+
+.field--grow {
+  flex: 1;
+}
+
+.field--qty {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.empty--sm {
+  font-size: var(--mv-font-size-sm);
+  padding: var(--mv-space-2) 0;
 }

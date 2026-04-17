@@ -2,6 +2,7 @@ import {
   Component,
   HostListener,
   OnInit,
+  ViewChild,
   computed,
   inject,
   signal,
@@ -14,16 +15,15 @@ import {
 } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
-import { Article } from '../catalog/articles/article.model';
+import { Article, ArticleRequest } from '../catalog/articles/article.model';
 import { ArticleClient } from '../catalog/articles/article.client';
+import { ArticleForm } from '../catalog/articles/article-form';
 import { Tax } from '../catalog/taxes/tax.model';
 import { TaxClient } from '../catalog/taxes/tax.client';
 import { Location } from '../catalog/locations/location.model';
 import { LocationClient } from '../catalog/locations/location.client';
 import { Provider } from '../people/providers/provider.model';
 import { ProviderClient } from '../people/providers/provider.client';
-
-import { ArticleQuickCreateForm } from './article-quick-create-form';
 import { PurchaseClient } from './purchase.client';
 import {
   Purchase,
@@ -33,12 +33,18 @@ import {
 import {
   computeProfitMargin,
   computeSalePrice,
-  lineTotal,
 } from './purchase-line-math';
 
+/** Two distinct usages of the article modal: quick-create vs full-edit. */
+type ArticleModalMode = 'create' | 'edit';
+
+/**
+ * Each draft represents exactly ONE item that the purchase will generate in
+ * inventory. To buy N units of the same article, the user appends N draft
+ * lines — quantity is no longer a per-line scalar.
+ */
 interface LineDraft {
   uid: string;
-  quantity: number;
   basePrice: number;
   profitMargin: number;
   taxId: string;
@@ -55,7 +61,7 @@ const newLineUid = () => `line-${++nextLineUid}`;
 
 @Component({
   selector: 'app-purchase-editor-page',
-  imports: [ReactiveFormsModule, ArticleQuickCreateForm],
+  imports: [ReactiveFormsModule, ArticleForm],
   templateUrl: './purchase-editor-page.html',
 })
 export class PurchaseEditorPage implements OnInit {
@@ -69,6 +75,8 @@ export class PurchaseEditorPage implements OnInit {
   private readonly providerClient = inject(ProviderClient);
   private readonly purchaseClient = inject(PurchaseClient);
 
+  @ViewChild('articleFormRef') private articleFormRef?: ArticleForm;
+
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -81,7 +89,21 @@ export class PurchaseEditorPage implements OnInit {
 
   protected readonly blocks = signal<ArticleBlock[]>([]);
   protected readonly articleSearch = signal('');
-  protected readonly showQuickCreate = signal(false);
+
+  /**
+   * Per-article "bulk add" counter. Keyed by article id.
+   * WHY separate signal: purely transient UI state for the block header input —
+   * never persisted with the block itself, so storing it alongside the blocks
+   * signal would force a blocks-array rewrite on every keystroke.
+   */
+  private readonly addLineCounts = signal<Record<string, number>>({});
+
+  /** Null when the article modal is closed. */
+  protected readonly articleModalMode = signal<ArticleModalMode | null>(null);
+  /** The article being edited in the modal (only set when mode = 'edit'). */
+  protected readonly articleModalTarget = signal<Article | null>(null);
+  protected readonly savingArticleModal = signal(false);
+  protected readonly articleModalError = signal<string | null>(null);
 
   protected readonly headerForm = this.fb.nonNullable.group({
     code: ['', [Validators.required, Validators.maxLength(60)]],
@@ -102,7 +124,6 @@ export class PurchaseEditorPage implements OnInit {
     () => new Set(this.blocks().map((b) => b.article.id)),
   );
 
-  /** Articles in the global catalog matching the search and not yet added. */
   protected readonly searchResults = computed<Article[]>(() => {
     const query = this.articleSearch().trim().toLowerCase();
     if (query === '') return [];
@@ -120,7 +141,7 @@ export class PurchaseEditorPage implements OnInit {
     let total = 0;
     for (const block of this.blocks()) {
       for (const line of block.lines) {
-        total += lineTotal(line.basePrice, line.quantity);
+        total += line.basePrice;
       }
     }
     return Math.round(total * 100) / 100;
@@ -129,6 +150,16 @@ export class PurchaseEditorPage implements OnInit {
   protected readonly hasUnsavedChanges = computed(
     () => this.blocks().length > 0 || this.headerForm.dirty,
   );
+
+  /**
+   * Child candidates for the article edit modal: all catalog articles except
+   * the one being edited (prevents direct self-reference).
+   */
+  protected readonly articleModalChildCandidates = computed<Article[]>(() => {
+    const target = this.articleModalTarget();
+    if (!target) return this.catalog();
+    return this.catalog().filter((a) => a.id !== target.id);
+  });
 
   ngOnInit(): void {
     this.loadCollections();
@@ -211,14 +242,18 @@ export class PurchaseEditorPage implements OnInit {
         blocks.push(block);
       }
       const taxRate = this.taxesById().get(line.taxId)?.rate ?? 0;
-      block.lines.push({
-        uid: newLineUid(),
-        quantity: line.quantity,
-        basePrice: line.buyPrice,
-        profitMargin: line.profitMargin,
-        taxId: line.taxId,
-        salePrice: computeSalePrice(line.buyPrice, line.profitMargin, taxRate),
-      });
+      // Expand legacy lines (quantity > 1) into N one-item drafts so the
+      // editor always represents one item per line.
+      const times = Math.max(1, Math.floor(line.quantity || 1));
+      for (let i = 0; i < times; i++) {
+        block.lines.push({
+          uid: newLineUid(),
+          basePrice: line.buyPrice,
+          profitMargin: line.profitMargin,
+          taxId: line.taxId,
+          salePrice: computeSalePrice(line.buyPrice, line.profitMargin, taxRate),
+        });
+      }
     }
     this.blocks.set(blocks);
   }
@@ -252,8 +287,6 @@ export class PurchaseEditorPage implements OnInit {
     const taxRate = this.taxesById().get(taxId)?.rate ?? 0;
     const basePrice = article.basePrice ?? 0;
     const retail = article.retailPrice ?? 0;
-    // If the article carries a sensible PVP, derive the margin from it. Otherwise
-    // start with margin = 0 and let the user type.
     const profitMargin =
       basePrice > 0 && retail > 0
         ? computeProfitMargin(basePrice, retail, taxRate)
@@ -261,7 +294,6 @@ export class PurchaseEditorPage implements OnInit {
     const salePrice = computeSalePrice(basePrice, profitMargin, taxRate);
     return {
       uid: newLineUid(),
-      quantity: 1,
       basePrice,
       profitMargin,
       taxId,
@@ -269,14 +301,27 @@ export class PurchaseEditorPage implements OnInit {
     };
   }
 
+  /** Returns the current "add N lines at once" counter for a given block, defaulting to 1. */
+  protected addLineCountFor(articleId: string): number {
+    return this.addLineCounts()[articleId] ?? 1;
+  }
+
+  protected setAddLineCount(articleId: string, raw: string | number): void {
+    const value = typeof raw === 'number' ? raw : Number(raw);
+    const count = Number.isFinite(value) && value >= 1 ? Math.floor(value) : 1;
+    this.addLineCounts.set({ ...this.addLineCounts(), [articleId]: count });
+  }
+
   protected addLineToArticle(articleId: string): void {
+    const count = this.addLineCountFor(articleId);
     this.blocks.set(
       this.blocks().map((block) => {
         if (block.article.id !== articleId) return block;
-        return {
-          ...block,
-          lines: [...block.lines, this.createDefaultLine(block.article)],
-        };
+        const extras: LineDraft[] = [];
+        for (let i = 0; i < count; i++) {
+          extras.push(this.createDefaultLine(block.article));
+        }
+        return { ...block, lines: [...block.lines, ...extras] };
       }),
     );
   }
@@ -311,49 +356,27 @@ export class PurchaseEditorPage implements OnInit {
 
   // ─── reactive line math ──────────────────────────────────────────────────
 
-  protected onQuantityChange(line: LineDraft, raw: string): void {
-    const value = Math.max(1, Math.floor(Number(raw) || 1));
-    line.quantity = value;
-    this.touch();
-  }
-
   protected onBasePriceChange(line: LineDraft, raw: string): void {
     line.basePrice = clampNumber(raw);
-    line.salePrice = computeSalePrice(
-      line.basePrice,
-      line.profitMargin,
-      this.taxRateFor(line),
-    );
+    line.salePrice = computeSalePrice(line.basePrice, line.profitMargin, this.taxRateFor(line));
     this.touch();
   }
 
   protected onProfitMarginChange(line: LineDraft, raw: string): void {
     line.profitMargin = clampNumber(raw);
-    line.salePrice = computeSalePrice(
-      line.basePrice,
-      line.profitMargin,
-      this.taxRateFor(line),
-    );
+    line.salePrice = computeSalePrice(line.basePrice, line.profitMargin, this.taxRateFor(line));
     this.touch();
   }
 
   protected onTaxChange(line: LineDraft, taxId: string): void {
     line.taxId = taxId;
-    line.salePrice = computeSalePrice(
-      line.basePrice,
-      line.profitMargin,
-      this.taxRateFor(line),
-    );
+    line.salePrice = computeSalePrice(line.basePrice, line.profitMargin, this.taxRateFor(line));
     this.touch();
   }
 
   protected onSalePriceChange(line: LineDraft, raw: string): void {
     line.salePrice = clampNumber(raw);
-    line.profitMargin = computeProfitMargin(
-      line.basePrice,
-      line.salePrice,
-      this.taxRateFor(line),
-    );
+    line.profitMargin = computeProfitMargin(line.basePrice, line.salePrice, this.taxRateFor(line));
     this.touch();
   }
 
@@ -362,38 +385,82 @@ export class PurchaseEditorPage implements OnInit {
   }
 
   protected lineSubtotal(line: LineDraft): number {
-    return lineTotal(line.basePrice, line.quantity);
+    return Math.round(line.basePrice * 100) / 100;
   }
 
-  /** Triggers signal change detection on `blocks` after mutating a line in place. */
   private touch(): void {
     this.blocks.set([...this.blocks()]);
   }
 
-  // ─── article quick-create ────────────────────────────────────────────────
+  // ─── article modal (create / edit) ──────────────────────────────────────
 
-  protected openQuickCreate(): void {
-    this.showQuickCreate.set(true);
+  /** Open the modal for quick-creating a new article. */
+  protected openArticleCreate(): void {
+    this.articleModalError.set(null);
+    this.articleModalTarget.set(null);
+    this.articleModalMode.set('create');
   }
 
-  protected closeQuickCreate(): void {
-    this.showQuickCreate.set(false);
+  /** Open the modal pre-filled to edit an existing article's full definition. */
+  protected openArticleEdit(article: Article): void {
+    this.articleModalError.set(null);
+    this.articleModalTarget.set(article);
+    this.articleModalMode.set('edit');
+    // Defer form reset until the ViewChild is rendered.
+    setTimeout(() => this.articleFormRef?.reset(article));
   }
 
-  protected onArticleCreated(article: Article): void {
-    this.catalog.set([article, ...this.catalog()]);
-    this.showQuickCreate.set(false);
-    this.addArticle(article);
+  protected closeArticleModal(): void {
+    this.articleModalMode.set(null);
+    this.articleModalTarget.set(null);
+    this.articleModalError.set(null);
   }
 
-  // ─── save ────────────────────────────────────────────────────────────────
+  /** Handles ArticleRequest from the modal form for both create and edit modes. */
+  protected onArticleModalSave(body: ArticleRequest): void {
+    const mode = this.articleModalMode();
+    if (!mode) return;
+
+    this.savingArticleModal.set(true);
+    this.articleModalError.set(null);
+
+    const target = this.articleModalTarget();
+    const request$ = target
+      ? this.articleClient.update(target.id, body)
+      : this.articleClient.create(body);
+
+    request$.subscribe({
+      next: (saved) => {
+        this.savingArticleModal.set(false);
+
+        if (target) {
+          // Update the catalog and any existing blocks that reference this article.
+          this.catalog.set(this.catalog().map((a) => (a.id === saved.id ? saved : a)));
+          this.blocks.set(
+            this.blocks().map((b) => (b.article.id === saved.id ? { ...b, article: saved } : b)),
+          );
+        } else {
+          // New article: add to catalog and auto-add it as a purchase line.
+          this.catalog.set([saved, ...this.catalog()]);
+          this.addArticle(saved);
+        }
+
+        this.closeArticleModal();
+      },
+      error: () => {
+        this.savingArticleModal.set(false);
+        this.articleModalError.set('No se pudo guardar el artículo.');
+      },
+    });
+  }
+
+  // ─── save purchase ────────────────────────────────────────────────────────
 
   protected canSave(): boolean {
     if (this.headerForm.invalid) return false;
     if (this.blocks().length === 0) return false;
     for (const block of this.blocks()) {
       for (const line of block.lines) {
-        if (line.quantity < 1) return false;
         if (!line.taxId) return false;
         if (!Number.isFinite(line.basePrice) || line.basePrice < 0) return false;
       }
@@ -410,11 +477,13 @@ export class PurchaseEditorPage implements OnInit {
 
     const header = this.headerForm.getRawValue();
     const lines: PurchaseLineRequest[] = [];
+    // Each draft maps to exactly one purchase line with quantity=1 — the backend
+    // still accepts the legacy `quantity` field in its request contract.
     for (const block of this.blocks()) {
       for (const line of block.lines) {
         lines.push({
           articleId: block.article.id,
-          quantity: line.quantity,
+          quantity: 1,
           buyPrice: line.basePrice,
           profitMargin: line.profitMargin,
           taxId: line.taxId,

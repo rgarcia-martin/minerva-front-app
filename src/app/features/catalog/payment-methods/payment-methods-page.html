@@ -1,0 +1,169 @@
+<section class="page">
+  <header class="page__head">
+    <div>
+      <h1>Métodos de pago</h1>
+      <p>Medios de cobro aplicables a las ventas.</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="openCreate()">
+      Nuevo método de pago
+    </button>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="alert alert--error">{{ msg }}</div>
+  }
+
+  <div class="accordion" [class.accordion--open]="formMode().kind !== 'closed'" [attr.inert]="formMode().kind === 'closed' ? '' : null">
+    <div class="accordion__inner">
+      <article class="card">
+        <div class="card__head">
+          <h2 class="card__title">
+            {{ formMode().kind === 'create' ? 'Nuevo método de pago' : 'Editar método de pago' }}
+          </h2>
+          <button type="button" class="btn btn--ghost btn--sm" (click)="closeForm()">
+            Cerrar
+          </button>
+        </div>
+        <div class="card__body">
+          <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="field">
+              <label class="field__label" for="pm-name">Nombre</label>
+              <input
+                id="pm-name"
+                class="field__input"
+                type="text"
+                formControlName="name"
+                autocomplete="off"
+              />
+              @if (form.controls.name.touched && form.controls.name.invalid) {
+                <span class="field__error">El nombre es obligatorio.</span>
+              }
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="pm-type">Tipo</label>
+              <select id="pm-type" class="field__select" formControlName="type">
+                <option value="CASH">Efectivo</option>
+                <option value="CARD">Tarjeta</option>
+                <option value="GATEWAY">Pasarela</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="pm-config">Configuración (opcional)</label>
+              <textarea
+                id="pm-config"
+                class="field__input"
+                rows="3"
+                formControlName="configuration"
+              ></textarea>
+            </div>
+
+            <div class="form__actions">
+              <button
+                type="button"
+                class="btn btn--ghost"
+                (click)="closeForm()"
+                [disabled]="saving()"
+              >
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn--primary" [disabled]="saving()">
+                {{ saving() ? 'Guardando…' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <article class="card">
+    <div class="card__head">
+      <h2 class="card__title">Listado</h2>
+      <button
+        type="button"
+        class="btn btn--ghost btn--sm"
+        (click)="refresh()"
+        [disabled]="loading()"
+      >
+        Refrescar
+      </button>
+    </div>
+    <div class="card__body card__body--flush">
+      @if (loading()) {
+        <p class="empty">Cargando…</p>
+      } @else if (paymentMethods().length === 0) {
+        <p class="empty">Aún no hay métodos de pago definidos.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Configuración</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pm of paginatedPaymentMethods(); track pm.id) {
+              <tr>
+                <td>{{ pm.name }}</td>
+                <td>{{ typeLabel(pm.type) }}</td>
+                <td class="muted">{{ pm.configuration ?? '—' }}</td>
+                <td class="text-right">
+                  <div class="table__actions">
+                    <button
+                      type="button"
+                      class="btn btn--ghost btn--sm"
+                      (click)="openEdit(pm)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn--danger btn--sm"
+                      (click)="remove(pm)"
+                    >
+                      Borrar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="pagination">
+          <div class="pagination__info">
+            Mostrar
+            <select #pageSel (change)="setPageSize(+pageSel.value)">
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === pageSize()">{{ opt }}</option>
+              }
+            </select>
+            por página
+          </div>
+          <div class="pagination__nav">
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() <= 1"
+              (click)="goToPage(activePage() - 1)"
+            >
+              &laquo; Anterior
+            </button>
+            <span class="pagination__current">{{ activePage() }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() >= totalPages()"
+              (click)="goToPage(activePage() + 1)"
+            >
+              Siguiente &raquo;
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </article>
+</section>
