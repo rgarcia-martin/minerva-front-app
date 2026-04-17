@@ -126,7 +126,11 @@ export class PaymentMethodsPage implements OnInit {
   protected remove(pm: PaymentMethod): void {
     if (!confirm(`¿Eliminar el método de pago "${pm.name}"?`)) return;
     this.client.delete(pm.id).subscribe({
-      next: () => this.refresh(),
+      next: () => {
+        const mode = this.formMode();
+        if (mode.kind === 'edit' && mode.id === pm.id) this.closeForm();
+        this.refresh();
+      },
       error: () => this.error.set('No se pudo eliminar el método de pago.'),
     });
   }

@@ -102,6 +102,7 @@
       } @else if (articles().length === 0) {
         <p class="empty">Aún no hay artículos en el catálogo.</p>
       } @else {
+        <div class="table-wrap">
         <table class="table">
           <thead>
             <tr>
@@ -151,6 +152,7 @@
             }
           </tbody>
         </table>
+        </div>
         <div class="pagination">
           <div class="pagination__info">
             Mostrar

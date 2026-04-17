@@ -120,7 +120,11 @@ export class LocationsPage implements OnInit {
   protected remove(loc: Location): void {
     if (!confirm(`¿Eliminar la localización "${loc.name}"?`)) return;
     this.client.delete(loc.id).subscribe({
-      next: () => this.refresh(),
+      next: () => {
+        const mode = this.formMode();
+        if (mode.kind === 'edit' && mode.id === loc.id) this.closeForm();
+        this.refresh();
+      },
       error: () => this.error.set('No se pudo eliminar la localización.'),
     });
   }

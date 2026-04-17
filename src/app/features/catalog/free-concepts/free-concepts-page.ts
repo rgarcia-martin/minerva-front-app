@@ -154,7 +154,11 @@ export class FreeConceptsPage implements OnInit {
   protected remove(concept: FreeConcept): void {
     if (!confirm(`¿Eliminar el concepto "${concept.name}"?`)) return;
     this.client.delete(concept.id).subscribe({
-      next: () => this.refresh(),
+      next: () => {
+        const mode = this.formMode();
+        if (mode.kind === 'edit' && mode.id === concept.id) this.closeForm();
+        this.refresh();
+      },
       error: () => this.error.set('No se pudo eliminar el concepto.'),
     });
   }

@@ -121,7 +121,11 @@ export class TaxesPage implements OnInit {
   protected remove(tax: Tax): void {
     if (!confirm(`¿Eliminar el impuesto "${tax.description}"?`)) return;
     this.client.delete(tax.id).subscribe({
-      next: () => this.refresh(),
+      next: () => {
+        const mode = this.formMode();
+        if (mode.kind === 'edit' && mode.id === tax.id) this.closeForm();
+        this.refresh();
+      },
       error: () => this.error.set('No se pudo eliminar el impuesto.'),
     });
   }

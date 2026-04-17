@@ -30,7 +30,6 @@ export interface SaleLineRequest {
 }
 
 export interface SaleRequest {
-  code: string;
   employeeId: string;
   clientId: string | null;
   paymentMethodId: string;

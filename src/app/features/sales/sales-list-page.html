@@ -29,6 +29,7 @@
       } @else if (sales().length === 0) {
         <p class="empty">Aún no hay ventas registradas.</p>
       } @else {
+        <div class="table-wrap">
         <table class="table">
           <thead>
             <tr>
@@ -64,6 +65,7 @@
             }
           </tbody>
         </table>
+        </div>
         <div class="pagination">
           <div class="pagination__info">
             Mostrar

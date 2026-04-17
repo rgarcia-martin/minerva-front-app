@@ -90,7 +90,6 @@ export class SalesEditorPage implements OnInit {
   );
 
   protected readonly headerForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.maxLength(120)]],
     employeeId: ['', [Validators.required]],
     paymentMethodId: ['', [Validators.required]],
   });
@@ -324,7 +323,6 @@ export class SalesEditorPage implements OnInit {
 
     const header = this.headerForm.getRawValue();
     const body: SaleRequest = {
-      code: header.code,
       employeeId: header.employeeId,
       paymentMethodId: header.paymentMethodId,
       clientId: null,

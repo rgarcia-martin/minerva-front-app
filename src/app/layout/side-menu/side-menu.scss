@@ -119,3 +119,17 @@
   padding: 2px 6px;
   border-radius: var(--mv-radius-sm);
 }
+
+@media (max-width: 768px) {
+  :host {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 240px;
+  }
+
+  .side {
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+  }
+}

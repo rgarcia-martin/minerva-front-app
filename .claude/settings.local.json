@@ -1,5 +1,4 @@
 {
-  "model": "sonnet",
   "env": {
     "MAX_THINKING_TOKENS": "10000",
     "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
@@ -24,7 +23,9 @@
       "Bash(npm install:*)",
       "Bash(npx ng:*)",
       "Bash(npm run:*)",
-      "Read(//j/Proyectos/minerva-core/**)"
+      "Read(//j/Proyectos/minerva-core/**)",
+      "Bash(xargs grep *)"
     ]
-  }
+  },
+  "model": "sonnet"
 }

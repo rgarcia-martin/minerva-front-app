@@ -141,7 +141,11 @@ export class ArticlesPage implements OnInit {
   protected remove(article: Article): void {
     if (!confirm(`¿Eliminar el artículo "${article.name}"?`)) return;
     this.client.delete(article.id).subscribe({
-      next: () => this.refresh(),
+      next: () => {
+        const mode = this.formMode();
+        if (mode.kind === 'edit' && mode.id === article.id) this.closeForm();
+        this.refresh();
+      },
       error: () => this.error.set('No se pudo eliminar el artículo.'),
     });
   }

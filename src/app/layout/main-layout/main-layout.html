@@ -1,7 +1,8 @@
-<div class="layout">
+<div class="layout" [class.layout--sidebar-open]="sidebarOpen">
+  <div class="layout__overlay" (click)="closeSidebar()"></div>
   <app-side-menu class="layout__side" />
   <div class="layout__main">
-    <app-header class="layout__header" />
+    <app-header class="layout__header" (menuToggle)="toggleSidebar()" />
     <main class="layout__content">
       <router-outlet />
     </main>
